@@ -2,4 +2,8 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="lavender_main">#B6B4E6</color>
+    <color name="lavender_light">#ECEBFF</color>
+    <color name="gray_light">#E5E5EC</color>
+    <color name="text_dark">#2F2F3A</color>
 </resources>
