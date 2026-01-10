@@ -1,18 +1,15 @@
-package com.example.giftyfy;
+package com.example.giftyfy.friend;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.giftyfy.friend.Friend;
-import com.example.giftyfy.friend.FriendAdapter;
+import com.example.giftyfy.R;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -27,18 +24,10 @@ import java.util.Random;
 
 public class FriendsFragment extends Fragment {
 
-    public interface OnFriendGiftClickListener {
-        void onFriendGiftClick(String friendName,
-                               String relation,
-                               ArrayList<String> interests,
-                               ArrayList<String> receivedTitles);
-    }
-
-    private OnFriendGiftClickListener listener;
-
     private FriendAdapter upcomingAdapter;
     private FriendAdapter allAdapter;
 
+    // 사용자님이 요청하신 태그 리스트
     private final List<String> availableTags = Arrays.asList(
             "디저트러버", "애주가", "상품권애호가", "카페돌이", "고기진심러",
             "빵지순례자", "편의점단골", "배달앱VIP", "집순이", "집돌이",
@@ -47,37 +36,17 @@ public class FriendsFragment extends Fragment {
             "게임덕후", "보드게이머", "러닝크루", "요리꿈나무", "패션피플"
     );
 
-    // 테스트용 받은 선물 풀
-    private final List<String> dummyReceivedPool = Arrays.asList(
-            "Perfume", "Skincare Set", "Chocolate Box", "Coffee Machine",
-            "Headphones", "Backpack", "Lipstick", "Smart Watch"
-    );
-
     public FriendsFragment() {
         super(R.layout.fragment_friends);
-    }
-
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        if (context instanceof OnFriendGiftClickListener) {
-            listener = (OnFriendGiftClickListener) context;
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        listener = null;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // 1. 데이터 생성
         List<Friend> allFriends = new ArrayList<>();
         List<Friend> upcomingFriends = new ArrayList<>();
-
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd", Locale.KOREA);
         Random random = new Random();
 
@@ -88,14 +57,18 @@ public class FriendsFragment extends Fragment {
                 cal.add(Calendar.DAY_OF_MONTH, i);
                 birthday = sdf.format(cal.getTime());
             } else {
-                birthday = String.format(Locale.KOREA, "%02d-%02d",
+                // 생일도 랜덤하게 생성 (월: 1~12, 일: 1~28)
+                birthday = String.format(Locale.KOREA, "%02d-%02d", 
                         random.nextInt(12) + 1, random.nextInt(28) + 1);
             }
 
+            // [태그 랜덤 선택 로직]
+            // 전체 리스트를 복사해서 무작위로 섞음
             List<String> shuffledTags = new ArrayList<>(availableTags);
             Collections.shuffle(shuffledTags);
-
-            int tagCount = 2 + random.nextInt(2); // 2~3개
+            
+            // 2개 또는 3개 선택
+            int tagCount = 2 + random.nextInt(2); 
             List<String> selectedTags = new ArrayList<>(shuffledTags.subList(0, tagCount));
 
             Friend friend = new Friend(
@@ -106,47 +79,33 @@ public class FriendsFragment extends Fragment {
             );
 
             allFriends.add(friend);
-            if (isUpcomingBirthday(birthday)) upcomingFriends.add(friend);
+            if (isUpcomingBirthday(birthday)) {
+                upcomingFriends.add(friend);
+            }
         }
 
+        // 2. 동기화 명령 정의
         Runnable syncAction = () -> {
             if (upcomingAdapter != null) upcomingAdapter.notifyDataSetChanged();
             if (allAdapter != null) allAdapter.notifyDataSetChanged();
         };
 
-        FriendAdapter.OnGiftClickListener onGiftClick = friend -> {
-            if (listener == null) return;
-
-            ArrayList<String> interests = new ArrayList<>(friend.getInterests());
-
-            ArrayList<String> receivedTitles = new ArrayList<>();
-            List<String> pool = new ArrayList<>(dummyReceivedPool);
-            Collections.shuffle(pool);
-            int n = 2 + random.nextInt(2);
-            receivedTitles.addAll(pool.subList(0, n));
-
-            listener.onFriendGiftClick(
-                    friend.getName(),
-                    friend.getRelation(),
-                    interests,
-                    receivedTitles
-            );
-        };
-
+        // 3. 상단 리스트 설정
         LinearLayout layoutUpcoming = view.findViewById(R.id.layoutUpcomingSection);
         if (!upcomingFriends.isEmpty()) {
             layoutUpcoming.setVisibility(View.VISIBLE);
             RecyclerView rvUpcoming = view.findViewById(R.id.rvUpcomingBirthdays);
             rvUpcoming.setLayoutManager(new LinearLayoutManager(getContext()));
-            upcomingAdapter = new FriendAdapter(upcomingFriends, syncAction, onGiftClick);
+            upcomingAdapter = new FriendAdapter(upcomingFriends, syncAction);
             rvUpcoming.setAdapter(upcomingAdapter);
         } else {
             layoutUpcoming.setVisibility(View.GONE);
         }
 
+        // 4. 하단 리스트 설정
         RecyclerView rvFriends = view.findViewById(R.id.rvFriends);
         rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
-        allAdapter = new FriendAdapter(allFriends, syncAction, onGiftClick);
+        allAdapter = new FriendAdapter(allFriends, syncAction);
         rvFriends.setAdapter(allAdapter);
     }
 
@@ -164,10 +123,12 @@ public class FriendsFragment extends Fragment {
             birthCal.setTime(birthDate);
             birthCal.set(Calendar.YEAR, now.get(Calendar.YEAR));
 
-            if (birthCal.before(now)) birthCal.add(Calendar.YEAR, 1);
+            if (birthCal.before(now)) {
+                birthCal.add(Calendar.YEAR, 1);
+            }
 
             long diff = birthCal.getTimeInMillis() - now.getTimeInMillis();
-            long diffDays = diff / (24L * 60 * 60 * 1000);
+            long diffDays = diff / (24 * 60 * 60 * 1000);
 
             return diffDays >= 0 && diffDays <= 7;
         } catch (ParseException e) {

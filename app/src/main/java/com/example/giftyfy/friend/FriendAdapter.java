@@ -3,9 +3,7 @@ package com.example.giftyfy.friend;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,18 +13,12 @@ import java.util.List;
 
 public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendViewHolder> {
 
-    public interface OnGiftClickListener {
-        void onGiftClick(Friend friend);
-    }
+    private List<Friend> friendList;
+    private Runnable onDataChanged;
 
-    private final List<Friend> friendList;
-    private final Runnable onDataChanged;
-    private final OnGiftClickListener onGiftClick;
-
-    public FriendAdapter(List<Friend> friendList, Runnable onDataChanged, OnGiftClickListener onGiftClick) {
+    public FriendAdapter(List<Friend> friendList, Runnable onDataChanged) {
         this.friendList = friendList;
         this.onDataChanged = onDataChanged;
-        this.onGiftClick = onGiftClick;
     }
 
     @NonNull
@@ -40,34 +32,34 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
     @Override
     public void onBindViewHolder(@NonNull FriendViewHolder holder, int position) {
         Friend friend = friendList.get(position);
-
         holder.tvName.setText(friend.getName());
         holder.tvBirthday.setText(friend.getBirthday());
         holder.tvRelation.setText(friend.getRelation());
 
-        // 관심사 문자열 만들기
         StringBuilder interestsText = new StringBuilder();
         for (String interest : friend.getInterests()) {
             interestsText.append("#").append(interest).append(" ");
         }
         holder.tvInterests.setText(interestsText.toString().trim());
 
-        // 아이템 클릭하면 확장/접기
+        // [핵심] 저장된 상태에 따라 확장 영역을 보여주거나 숨깁니다.
+        holder.layoutExpandable.setVisibility(friend.isExpanded() ? View.VISIBLE : View.GONE);
+
         holder.itemView.setOnClickListener(v -> {
-            if (holder.layoutExpandable.getVisibility() == View.GONE) {
-                holder.layoutExpandable.setVisibility(View.VISIBLE);
-            } else {
-                holder.layoutExpandable.setVisibility(View.GONE);
-            }
+            // 상태를 반전시키고 저장합니다.
+            boolean nextState = !friend.isExpanded();
+            friend.setExpanded(nextState);
+            holder.layoutExpandable.setVisibility(nextState ? View.VISIBLE : View.GONE);
         });
 
-        // 관계 태그 클릭 로직
         View.OnClickListener tagClickListener = v -> {
             String newRelation = ((TextView) v).getText().toString();
             friend.setRelation(newRelation);
-            holder.tvRelation.setText(newRelation);
-
-            if (onDataChanged != null) onDataChanged.run();
+            
+            // 데이터 변경 알림 (이제 isExpanded 덕분에 상태가 유지됩니다)
+            if (onDataChanged != null) {
+                onDataChanged.run();
+            }
         };
 
         holder.tagFamily.setOnClickListener(tagClickListener);
@@ -75,11 +67,6 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         holder.tagLove.setOnClickListener(tagClickListener);
         holder.tagWork.setOnClickListener(tagClickListener);
         holder.tagAwkward.setOnClickListener(tagClickListener);
-
-        // ✅ 선물하러 가기 버튼
-        holder.btnGoToGift.setOnClickListener(v -> {
-            if (onGiftClick != null) onGiftClick.onGiftClick(friend);
-        });
     }
 
     @Override
@@ -91,24 +78,20 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         TextView tvName, tvBirthday, tvRelation, tvInterests;
         TextView tagFamily, tagFriend, tagLove, tagWork, tagAwkward;
         View layoutExpandable;
-        Button btnGoToGift;
 
-        FriendViewHolder(@NonNull View itemView) {
+        public FriendViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvName);
             tvBirthday = itemView.findViewById(R.id.tvBirthday);
             tvRelation = itemView.findViewById(R.id.tvRelation);
             tvInterests = itemView.findViewById(R.id.tvInterests);
-
             layoutExpandable = itemView.findViewById(R.id.layoutExpandable);
-
+            
             tagFamily = itemView.findViewById(R.id.tagFamily);
             tagFriend = itemView.findViewById(R.id.tagFriend);
             tagLove = itemView.findViewById(R.id.tagLove);
             tagWork = itemView.findViewById(R.id.tagWork);
             tagAwkward = itemView.findViewById(R.id.tagAwkward);
-
-            btnGoToGift = itemView.findViewById(R.id.btnGoToGift); // ✅ item_friend.xml에 있음
         }
     }
 }
