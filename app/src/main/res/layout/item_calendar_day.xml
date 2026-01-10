@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="70dp"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="?attr/selectableItemBackground">
+
+    <TextView
+        android:id="@+id/tvDay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="25"
+        android:textColor="#333333"
+        android:textSize="14sp" />
+
+    <!-- 생일인 날에 보일 아이콘과 이름 묶음 -->
+    <LinearLayout
+        android:id="@+id/layoutBirthdayInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:visibility="invisible">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎂"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/tvBirthdayName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:text="이름"
+            android:textColor="#9A97F3"
+            android:textSize="9sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+</LinearLayout>

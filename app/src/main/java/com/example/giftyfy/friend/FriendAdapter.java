@@ -14,7 +14,7 @@ import java.util.List;
 public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendViewHolder> {
 
     private List<Friend> friendList;
-    private Runnable onDataChanged; // 데이터 변경 시 실행할 작업
+    private Runnable onDataChanged;
 
     public FriendAdapter(List<Friend> friendList, Runnable onDataChanged) {
         this.friendList = friendList;
@@ -42,19 +42,21 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         }
         holder.tvInterests.setText(interestsText.toString().trim());
 
+        // [핵심] 저장된 상태에 따라 확장 영역을 보여주거나 숨깁니다.
+        holder.layoutExpandable.setVisibility(friend.isExpanded() ? View.VISIBLE : View.GONE);
+
         holder.itemView.setOnClickListener(v -> {
-            if (holder.layoutExpandable.getVisibility() == View.GONE) {
-                holder.layoutExpandable.setVisibility(View.VISIBLE);
-            } else {
-                holder.layoutExpandable.setVisibility(View.GONE);
-            }
+            // 상태를 반전시키고 저장합니다.
+            boolean nextState = !friend.isExpanded();
+            friend.setExpanded(nextState);
+            holder.layoutExpandable.setVisibility(nextState ? View.VISIBLE : View.GONE);
         });
 
         View.OnClickListener tagClickListener = v -> {
             String newRelation = ((TextView) v).getText().toString();
-            friend.setRelation(newRelation); // 데이터(객체) 업데이트
+            friend.setRelation(newRelation);
             
-            // 데이터가 바뀌었으니 알림
+            // 데이터 변경 알림 (이제 isExpanded 덕분에 상태가 유지됩니다)
             if (onDataChanged != null) {
                 onDataChanged.run();
             }
