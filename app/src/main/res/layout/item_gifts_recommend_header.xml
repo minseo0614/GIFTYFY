@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- ✅ 네가 말한 “바” 느낌 -->
+    <TextView
+        android:id="@+id/tv_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#EEECEC"
+        android:textColor="#222222"
+        android:padding="10dp"
+        android:text="추천 바"
+        android:textStyle="bold"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="4dp"/>
+
+    <!-- ✅ 추천 상품 가로 스크롤 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_recommend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:overScrollMode="never"/>
+</LinearLayout>
