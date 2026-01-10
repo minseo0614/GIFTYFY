@@ -16,14 +16,6 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
 
-        // 앱 시작 시: 선물 탭부터 보여주기
-        if (savedInstanceState == null) {
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new GiftsFragment())
-                    .commit();
-        }
-
         // 탭 클릭 시 화면 전환
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment fragment;
@@ -44,5 +36,10 @@ public class MainActivity extends AppCompatActivity {
 
             return true;
         });
+
+        // 앱 시작 시: "선택"만 해주면 리스너가 알아서 replace 함
+        if (savedInstanceState == null) {
+            bottomNav.setSelectedItemId(R.id.nav_friends);
+        }
     }
 }
