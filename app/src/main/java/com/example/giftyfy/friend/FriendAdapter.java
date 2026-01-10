@@ -14,11 +14,22 @@ import java.util.List;
 public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendViewHolder> {
 
     private List<Friend> friendList;
-    private Runnable onDataChanged;
+    private OnRelationChangeListener relationListener;
+    private OnGiftButtonClickListener giftListener;
 
-    public FriendAdapter(List<Friend> friendList, Runnable onDataChanged) {
+    public interface OnRelationChangeListener {
+        void onRelationChanged();
+    }
+
+    // 선물하러 가기 버튼 클릭 리스너 정의
+    public interface OnGiftButtonClickListener {
+        void onGiftClick(Friend friend);
+    }
+
+    public FriendAdapter(List<Friend> friendList, OnRelationChangeListener relationListener, OnGiftButtonClickListener giftListener) {
         this.friendList = friendList;
-        this.onDataChanged = onDataChanged;
+        this.relationListener = relationListener;
+        this.giftListener = giftListener;
     }
 
     @NonNull
@@ -42,23 +53,26 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         }
         holder.tvInterests.setText(interestsText.toString().trim());
 
-        // [핵심] 저장된 상태에 따라 확장 영역을 보여주거나 숨깁니다.
         holder.layoutExpandable.setVisibility(friend.isExpanded() ? View.VISIBLE : View.GONE);
 
         holder.itemView.setOnClickListener(v -> {
-            // 상태를 반전시키고 저장합니다.
             boolean nextState = !friend.isExpanded();
             friend.setExpanded(nextState);
             holder.layoutExpandable.setVisibility(nextState ? View.VISIBLE : View.GONE);
         });
 
+        // 🎁 선물하러 가기 버튼 클릭 이벤트
+        holder.btnGoToGift.setOnClickListener(v -> {
+            if (giftListener != null) {
+                giftListener.onGiftClick(friend);
+            }
+        });
+
         View.OnClickListener tagClickListener = v -> {
             String newRelation = ((TextView) v).getText().toString();
             friend.setRelation(newRelation);
-            
-            // 데이터 변경 알림 (이제 isExpanded 덕분에 상태가 유지됩니다)
-            if (onDataChanged != null) {
-                onDataChanged.run();
+            if (relationListener != null) {
+                relationListener.onRelationChanged();
             }
         };
 
@@ -78,6 +92,7 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         TextView tvName, tvBirthday, tvRelation, tvInterests;
         TextView tagFamily, tagFriend, tagLove, tagWork, tagAwkward;
         View layoutExpandable;
+        View btnGoToGift; // 버튼 추가
 
         public FriendViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -86,6 +101,7 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
             tvRelation = itemView.findViewById(R.id.tvRelation);
             tvInterests = itemView.findViewById(R.id.tvInterests);
             layoutExpandable = itemView.findViewById(R.id.layoutExpandable);
+            btnGoToGift = itemView.findViewById(R.id.btnGoToGift); // 버튼 아이디 연결
             
             tagFamily = itemView.findViewById(R.id.tagFamily);
             tagFriend = itemView.findViewById(R.id.tagFriend);

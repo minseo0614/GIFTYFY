@@ -1,5 +1,6 @@
 package com.example.giftyfy.friend;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -10,45 +11,50 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.giftyfy.R;
+import com.example.giftyfy.friend.Friend;
+import com.example.giftyfy.friend.FriendAdapter;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 
 public class FriendsFragment extends Fragment {
 
+    // ✅ 에러 해결을 위한 인터페이스 정의 (MainActivity에서 구현 중인 것)
+    public interface OnFriendGiftClickListener {
+        void onFriendGiftClick(String friendName, String relation, ArrayList<String> interests, ArrayList<String> receivedTitles);
+    }
+
+    private OnFriendGiftClickListener giftClickListener;
     private FriendAdapter upcomingAdapter;
     private FriendAdapter allAdapter;
-
-    // 사용자님이 요청하신 태그 리스트
-    private final List<String> availableTags = Arrays.asList(
-            "디저트러버", "애주가", "상품권애호가", "카페돌이", "고기진심러",
-            "빵지순례자", "편의점단골", "배달앱VIP", "집순이", "집돌이",
-            "향기컬렉터", "캠핑매니아", "프로직장인", "운동매니아", "영양제신봉자",
-            "피부관리진심러", "다이어터", "귀여운게최고", "댕냥이집사", "독서가",
-            "게임덕후", "보드게이머", "러닝크루", "요리꿈나무", "패션피플"
-    );
 
     public FriendsFragment() {
         super(R.layout.fragment_friends);
     }
 
     @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        // MainActivity가 이 인터페이스를 구현하고 있는지 확인하고 연결합니다.
+        if (context instanceof OnFriendGiftClickListener) {
+            giftClickListener = (OnFriendGiftClickListener) context;
+        }
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1. 데이터 생성
+        // 데이터 생성 및 분류 로직 (기존과 동일)
         List<Friend> allFriends = new ArrayList<>();
         List<Friend> upcomingFriends = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd", Locale.KOREA);
-        Random random = new Random();
 
         for (int i = 1; i <= 30; i++) {
             String birthday;
@@ -57,25 +63,14 @@ public class FriendsFragment extends Fragment {
                 cal.add(Calendar.DAY_OF_MONTH, i);
                 birthday = sdf.format(cal.getTime());
             } else {
-                // 생일도 랜덤하게 생성 (월: 1~12, 일: 1~28)
-                birthday = String.format(Locale.KOREA, "%02d-%02d", 
-                        random.nextInt(12) + 1, random.nextInt(28) + 1);
+                birthday = "08-" + (i % 28 + 1);
             }
-
-            // [태그 랜덤 선택 로직]
-            // 전체 리스트를 복사해서 무작위로 섞음
-            List<String> shuffledTags = new ArrayList<>(availableTags);
-            Collections.shuffle(shuffledTags);
-            
-            // 2개 또는 3개 선택
-            int tagCount = 2 + random.nextInt(2); 
-            List<String> selectedTags = new ArrayList<>(shuffledTags.subList(0, tagCount));
 
             Friend friend = new Friend(
                     "친구 " + i,
                     birthday,
                     "미설정",
-                    selectedTags
+                    new ArrayList<>(Arrays.asList("취미" + i, "관심사" + (i + 1)))
             );
 
             allFriends.add(friend);
@@ -84,28 +79,39 @@ public class FriendsFragment extends Fragment {
             }
         }
 
-        // 2. 동기화 명령 정의
-        Runnable syncAction = () -> {
+        // 동기화 리스너
+        FriendAdapter.OnRelationChangeListener syncListener = () -> {
             if (upcomingAdapter != null) upcomingAdapter.notifyDataSetChanged();
             if (allAdapter != null) allAdapter.notifyDataSetChanged();
         };
 
-        // 3. 상단 리스트 설정
+        // 🎁 선물하기 클릭 리스너 (어댑터에 전달할 용도)
+        FriendAdapter.OnGiftButtonClickListener onGiftClick = friend -> {
+            if (giftClickListener != null) {
+                // MainActivity의 onFriendGiftClick 호출
+                giftClickListener.onFriendGiftClick(
+                        friend.getName(),
+                        friend.getRelation(),
+                        new ArrayList<>(friend.getInterests()),
+                        new ArrayList<>() // 아직 받은 선물 목록은 비어있음
+                );
+            }
+        };
+
+        // 상단 생일 섹션
         LinearLayout layoutUpcoming = view.findViewById(R.id.layoutUpcomingSection);
         if (!upcomingFriends.isEmpty()) {
             layoutUpcoming.setVisibility(View.VISIBLE);
             RecyclerView rvUpcoming = view.findViewById(R.id.rvUpcomingBirthdays);
             rvUpcoming.setLayoutManager(new LinearLayoutManager(getContext()));
-            upcomingAdapter = new FriendAdapter(upcomingFriends, syncAction);
+            upcomingAdapter = new FriendAdapter(upcomingFriends, syncListener, onGiftClick);
             rvUpcoming.setAdapter(upcomingAdapter);
-        } else {
-            layoutUpcoming.setVisibility(View.GONE);
         }
 
-        // 4. 하단 리스트 설정
+        // 하단 전체 친구 리스트
         RecyclerView rvFriends = view.findViewById(R.id.rvFriends);
         rvFriends.setLayoutManager(new LinearLayoutManager(getContext()));
-        allAdapter = new FriendAdapter(allFriends, syncAction);
+        allAdapter = new FriendAdapter(allFriends, syncListener, onGiftClick);
         rvFriends.setAdapter(allAdapter);
     }
 
