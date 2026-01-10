@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- 제목 -->
+        <TextView
+            android:id="@+id/tv_signup_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="GIFTYFY"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- 아이디 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="아이디"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"/>
+
+        <EditText
+            android:id="@+id/et_id"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:inputType="text"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 비밀번호 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="비밀번호"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"/>
+
+        <EditText
+            android:id="@+id/et_pw"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:inputType="textPassword"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 비밀번호 재확인 (입력칸 + 오른쪽 체크 아이콘) -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="비밀번호 재확인"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginBottom="16dp">
+
+            <EditText
+                android:id="@+id/et_pw_confirm"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingStart="12dp"
+                android:paddingEnd="44dp"
+                android:background="@android:color/transparent"
+                android:inputType="textPassword"/>
+
+            <!-- 커스텀 drawable 안 쓰고 시스템 아이콘 사용 -->
+            <TextView
+                android:id="@+id/tv_pw_check"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✓"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#4CAF50"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="12dp"
+                android:visibility="gone"/>
+        </RelativeLayout>
+
+        <!-- 이름 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="이름"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"/>
+
+        <EditText
+            android:id="@+id/et_name"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:inputType="textPersonName"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 생년월일 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="생년월일"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <Spinner
+                android:id="@+id/sp_year"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"/>
+
+            <Spinner
+                android:id="@+id/sp_month"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"/>
+
+            <Spinner
+                android:id="@+id/sp_day"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"/>
+        </LinearLayout>
+
+        <!-- 가입하기 버튼 (맨 밑, 꽉 차게) -->
+        <Button
+            android:id="@+id/btn_signup"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="가입하기"/>
+    </LinearLayout>
+</ScrollView>
