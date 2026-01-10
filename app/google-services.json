@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "987788192036",
+    "project_id": "giftyfy-452cd",
+    "storage_bucket": "giftyfy-452cd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:987788192036:android:1fa6bf2bc94a1ade0cabb1",
+        "android_client_info": {
+          "package_name": "com.example.giftyfy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOIJPW-2Oy2EK4lSrekMVDLAA-p-cRFbw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
