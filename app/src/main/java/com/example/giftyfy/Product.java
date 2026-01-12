@@ -13,10 +13,11 @@ public class Product {
     private String id;
     
     private String title;
-    private double price; // int -> double로 변경
+    private double price;
     private String thumbnail;
     private String description;
     private String category;
+    private String productUrl; // ✅ 상품 상세 페이지 URL 추가
     
     private List<String> tags = new ArrayList<>();
     
@@ -36,6 +37,7 @@ public class Product {
         this.tags = (tags != null) ? tags : new ArrayList<>();
     }
 
+    // Getter/Setter
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     
@@ -53,6 +55,9 @@ public class Product {
     
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public String getProductUrl() { return productUrl; } // ✅ 추가
+    public void setProductUrl(String productUrl) { this.productUrl = productUrl; } // ✅ 추가
     
     public List<String> getTags() { return tags; }
     public void setTags(List<String> tags) { this.tags = tags; }

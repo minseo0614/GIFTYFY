@@ -39,12 +39,14 @@ public class MyPageFragment extends Fragment {
             "빵지순례자", "편의점단골", "배달앱VIP", "집순이", "집돌이",
             "향기컬렉터", "캠핑매니아", "프로직장인", "운동매니아", "영양제신봉자",
             "피부관리진심러", "다이어터", "귀여운게최고", "댕냥이집사", "독서가",
-            "게임덕후", "보드게이머", "러닝크루", "요리꿈나무", "패션피플"
+            "게임덕후", "보드게이머", "러닝크루", "요리꿈나무", "패션피플", "주얼리수집가", "문구가좋아"
     };
 
     private String myName = "";
     private String myBirthday = "";
     private List<String> myInterests = new ArrayList<>();
+    
+    private List<Friend> realFriends = new ArrayList<>();
 
     public MyPageFragment() {
         super(R.layout.fragment_mypage);
@@ -63,9 +65,9 @@ public class MyPageFragment extends Fragment {
         btnLogout = view.findViewById(R.id.btnLogout);
 
         loadMyProfileFromServer();
+        loadRealFriendsFromServer();
 
         setupCalendarButtons(view);
-        updateCalendar();
         setupReceivedGifts();
 
         btnAddInterest.setOnClickListener(v -> showTagSelectDialog());
@@ -78,13 +80,21 @@ public class MyPageFragment extends Fragment {
         });
     }
 
+    private void loadRealFriendsFromServer() {
+        FirebaseManager.getInstance().fetchAllUsersAsFriends(friends -> {
+            if (friends != null) {
+                this.realFriends = friends;
+                updateCalendar();
+            }
+        });
+    }
+
     private void loadMyProfileFromServer() {
         FirebaseManager.getInstance().listenToMyProfile(data -> {
             if (data != null) {
                 myName = (String) data.get("name");
                 myBirthday = (String) data.get("birthday");
                 List<String> loadedInterests = (List<String>) data.get("interests");
-                
                 if (loadedInterests != null) {
                     myInterests = new ArrayList<>(loadedInterests);
                     updateInterestsUI();
@@ -107,13 +117,11 @@ public class MyPageFragment extends Fragment {
         chip.setChipBackgroundColorResource(android.R.color.white);
         chip.setChipStrokeColorResource(R.color.black);
         chip.setChipStrokeWidth(1f);
-        
         chip.setOnCloseIconClickListener(v -> {
             myInterests.remove(tag);
             saveProfileToServer();
             cgMyInterests.removeView(chip);
         });
-
         cgMyInterests.addView(chip);
     }
 
@@ -155,8 +163,7 @@ public class MyPageFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy년 MM월", Locale.KOREA);
         tvMonthTitle.setText(sdf.format(selectedDate.getTime()));
         List<String> daysInMonth = generateDaysInMonth(selectedDate);
-        List<Friend> dummyFriends = getDummyFriends();
-        CalendarAdapter adapter = new CalendarAdapter(daysInMonth, dummyFriends, (Calendar) selectedDate.clone());
+        CalendarAdapter adapter = new CalendarAdapter(daysInMonth, realFriends, (Calendar) selectedDate.clone());
         rvCalendar.setAdapter(adapter);
     }
 
@@ -171,22 +178,11 @@ public class MyPageFragment extends Fragment {
         return dayList;
     }
 
-    private List<Friend> getDummyFriends() {
-        List<Friend> friends = new ArrayList<>();
-        for (int i = 1; i <= 30; i++) {
-            Friend f = new Friend("친구" + i, "01-" + (i % 28 + 1), "미설정", Arrays.asList("태그"));
-            f.setId(String.valueOf(i));
-            friends.add(f);
-        }
-        return friends;
-    }
-
     private void setupReceivedGifts() {
         rvReceivedGifts.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         List<Product> dummyProducts = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
             Product p = new Product();
-            // ✅ 필드 직접 접근 대신 Setter 사용
             p.setId(String.valueOf(i));
             p.setTitle("받은 선물 " + i);
             p.setPrice(20000 + (i * 5000));
