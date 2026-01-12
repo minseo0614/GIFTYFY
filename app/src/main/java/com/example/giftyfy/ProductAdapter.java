@@ -13,11 +13,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
 
     private final List<Product> items;
+    // ✅ 천 단위 콤마와 소수점 제거를 위한 포맷 설정
+    private final DecimalFormat df = new DecimalFormat("#,###");
 
     public ProductAdapter(List<Product> items) {
         this.items = items;
@@ -35,29 +38,28 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
     public void onBindViewHolder(@NonNull VH h, int position) {
         Product p = items.get(position);
 
-        h.tvTitle.setText(p.title);
-        h.tvPrice.setText(p.price + "원");
+        h.tvTitle.setText(p.getTitle());
+        
+        // ✅ 1000.0 대신 1,000원으로 표시되도록 수정
+        h.tvPrice.setText(df.format(p.getPrice()) + "원");
 
         Glide.with(h.itemView.getContext())
-                .load(p.thumbnail)
+                .load(p.getThumbnail())
                 .into(h.imgThumb);
 
-        // ❤️ 하트 상태 표시
         h.btnWish.setImageResource(
-                p.wish ? R.drawable.ic_heart_filled
+                p.isWish() ? R.drawable.ic_heart_filled
                         : R.drawable.ic_heart_outline
         );
 
-        // ❤️ 하트 클릭 → 토글만
         h.btnWish.setOnClickListener(v -> {
-            p.wish = !p.wish;   // 상태 반전
+            p.setWish(!p.isWish());
             notifyItemChanged(h.getAdapterPosition());
         });
 
-        // 📄 카드 클릭 → 상세 화면 이동
         h.itemView.setOnClickListener(v -> {
             Intent i = new Intent(v.getContext(), DetailActivity.class);
-            i.putExtra("productId", p.id);
+            i.putExtra("productId", p.getId());
             v.getContext().startActivity(i);
         });
     }

@@ -5,103 +5,70 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
-import com.google.android.material.appbar.MaterialToolbar;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import java.util.List;
 
 public class DetailActivity extends AppCompatActivity {
 
-    private boolean liked = false;   // 하트 상태
+    private ImageView imgMain;
+    private TextView tvTitle, tvPrice, tvCategory, tvDesc;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 
-        // ✅ Toolbar 설정 (뒤로가기 화살표 + 제목 숨김)
-        MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        // ✅ ID 수정: tv_detail_title -> tv_title 등 XML에 정의된 이름으로 변경
+        imgMain = findViewById(R.id.img);
+        tvTitle = findViewById(R.id.tv_title);
+        tvPrice = findViewById(R.id.tv_price);
+        tvCategory = findViewById(R.id.tv_category);
+        tvDesc = findViewById(R.id.tv_desc);
 
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("");   // 제목 숨김
-        }
-
-        // ✅ 전달받은 상품 id
-        int id = getIntent().getIntExtra("productId", -1);
-        if (id == -1) {
+        String pid = getIntent().getStringExtra("productId");
+        if (pid == null) {
             finish();
             return;
         }
 
-        // ✅ View 연결
-        ImageView img = findViewById(R.id.img);
-        TextView tvTitle = findViewById(R.id.tv_title);
-        TextView tvPrice = findViewById(R.id.tv_price);
-        TextView tvCategory = findViewById(R.id.tv_category);
-        TextView tvDesc = findViewById(R.id.tv_desc);
+        fetchProductDetail(pid);
+    }
 
-        ImageView btnLike = findViewById(R.id.btn_like);
-        findViewById(R.id.btn_gift);   // 버튼만 존재 (동작 없음)
-
-        // ❤️ 하트 초기 상태
-        btnLike.setImageResource(R.drawable.ic_heart_outline);
-
-        btnLike.setOnClickListener(v -> {
-            liked = !liked;
-            btnLike.setImageResource(
-                    liked ? R.drawable.ic_heart_filled
-                            : R.drawable.ic_heart_outline
-            );
-        });
-
-        // ✅ API 호출
-        ProductApi api = ApiClient.get().create(ProductApi.class);
-        api.getProductDetail(id).enqueue(new Callback<Product>() {
+    private void fetchProductDetail(String pid) {
+        FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
             @Override
-            public void onResponse(@NonNull Call<Product> call,
-                                   @NonNull Response<Product> response) {
-
-                if (!response.isSuccessful() || response.body() == null) {
-                    Toast.makeText(DetailActivity.this,
-                            "상세 실패: " + response.code(),
-                            Toast.LENGTH_SHORT).show();
-                    finish();
-                    return;
+            public void onLoaded(List<Product> products) {
+                Product target = null;
+                for (Product p : products) {
+                    if (p.getId().equals(pid)) {
+                        target = p;
+                        break;
+                    }
                 }
 
-                Product p = response.body();
-
-                tvTitle.setText(p.title);
-                tvPrice.setText(p.price + "원");
-                tvCategory.setText(p.category);
-                tvDesc.setText(p.description);
-
-                Glide.with(DetailActivity.this)
-                        .load(p.thumbnail)
-                        .into(img);
+                if (target != null) {
+                    updateUI(target);
+                }
             }
 
             @Override
-            public void onFailure(@NonNull Call<Product> call, @NonNull Throwable t) {
-                Toast.makeText(DetailActivity.this,
-                        "상세 API 실패: " + t.getMessage(),
-                        Toast.LENGTH_LONG).show();
-                finish();
+            public void onError(Exception e) {
+                Toast.makeText(DetailActivity.this, "상세 정보 로딩 실패", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    // ✅ 뒤로가기 화살표 클릭 처리
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish();
-        return true;
+    private void updateUI(Product p) {
+        tvTitle.setText(p.getTitle());
+        tvPrice.setText(p.getPrice() + "원");
+        tvCategory.setText(p.getCategory());
+        tvDesc.setText(p.getDescription());
+
+        Glide.with(this)
+                .load(p.getThumbnail())
+                .into(imgMain);
     }
 }

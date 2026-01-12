@@ -1,6 +1,7 @@
 package com.example.giftyfy;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,148 +22,123 @@ import java.util.Set;
 
 public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final int VT_HEADER = 0;
-    private static final int VT_ITEM = 1;
-
     private final boolean fromFriend;
     private final String friendName;
+    private final Set<String> receivedSet;
 
-    private final Set<String> receivedSet = new HashSet<>();
+    private final List<Product> recommended = new ArrayList<>();
+    private final List<Product> allRemaining = new ArrayList<>();
+    
+    // ✅ 가격 포맷 설정을 위한 DecimalFormat 추가
+    private final DecimalFormat df = new DecimalFormat("#,###");
 
-    private final List<Product> rec = new ArrayList<>();
-    private final List<Product> rest = new ArrayList<>();
-
-    public GiftsMixAdapter(boolean fromFriend, String friendName, List<String> receivedTitles) {
+    public GiftsMixAdapter(boolean fromFriend, String friendName, List<String> received) {
         this.fromFriend = fromFriend;
-        this.friendName = (friendName == null) ? "" : friendName;
-
-        if (receivedTitles != null) receivedSet.addAll(receivedTitles);
+        this.friendName = friendName;
+        this.receivedSet = new HashSet<>(received);
     }
 
-    private boolean hasHeader() {
-        return fromFriend && !friendName.isEmpty();
-    }
+    public void setData(List<Product> rec, List<Product> all) {
+        recommended.clear();
+        recommended.addAll(rec);
 
-    public void setData(List<Product> recommended, List<Product> all) {
-        rec.clear();
-        rest.clear();
+        Set<String> recIds = new HashSet<>();
+        for (Product p : rec) recIds.add(p.getId());
 
-        if (recommended != null) rec.addAll(recommended);
-
-        Set<Integer> recIds = new HashSet<>();
-        for (Product p : rec) recIds.add(p.id);
-
-        if (all != null) {
-            for (Product p : all) {
-                if (!recIds.contains(p.id)) rest.add(p);
-            }
+        allRemaining.clear();
+        for (Product p : all) {
+            if (!recIds.contains(p.getId())) allRemaining.add(p);
         }
-
         notifyDataSetChanged();
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (hasHeader() && position == 0) return VT_HEADER;
-        return VT_ITEM;
+        if (fromFriend && position == 0) return 0; // Header
+        int actualPos = fromFriend ? position - 1 : position;
+        if (actualPos < recommended.size()) return 1; // Rec
+        return 2; // Normal
+    }
+
+    @Override
+    public int getItemCount() {
+        int count = recommended.size() + allRemaining.size();
+        if (fromFriend) count++;
+        return count;
     }
 
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LayoutInflater inf = LayoutInflater.from(parent.getContext());
-
-        if (viewType == VT_HEADER) {
-            View v = inf.inflate(android.R.layout.simple_list_item_1, parent, false);
+        if (viewType == 0) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_gifts_recommend_header, parent, false);
             return new HeaderVH(v);
-        } else {
-            View v = inf.inflate(R.layout.item_product, parent, false);
-            return new ItemVH(v);
         }
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product, parent, false);
+        return new ProductVH(v);
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
-        if (getItemViewType(position) == VT_HEADER) {
-            HeaderVH h = (HeaderVH) holder;
-            h.title.setText(friendName + " 추천 선물");
+        if (holder instanceof HeaderVH) {
+            ((HeaderVH) holder).tv.setText(friendName + "님을 위한 선물 추천");
             return;
         }
 
-        int headerOffset = hasHeader() ? 1 : 0;
-        int idx = position - headerOffset;
+        ProductVH h = (ProductVH) holder;
+        int actualPos = fromFriend ? position - 1 : position;
+        Product p = (actualPos < recommended.size()) ? recommended.get(actualPos) : allRemaining.get(actualPos - recommended.size());
 
-        final Product p;
-        final boolean isRec = idx < rec.size();
-
-        if (isRec) {
-            p = rec.get(idx);
-        } else {
-            p = rest.get(idx - rec.size());
-        }
-
-        ItemVH h = (ItemVH) holder;
-
-        h.tvTitle.setText(p.title);
-        h.tvPrice.setText(p.price + "원");
+        h.tvTitle.setText(p.getTitle());
+        
+        // ✅ .0 제거 및 콤마 추가 적용
+        h.tvPrice.setText(df.format(p.getPrice()) + "원");
 
         Glide.with(h.itemView.getContext())
-                .load(p.thumbnail)
+                .load(p.getThumbnail())
                 .into(h.imgThumb);
 
         h.btnWish.setImageResource(
-                p.wish ? R.drawable.ic_heart_filled
-                        : R.drawable.ic_heart_outline
+                p.isWish() ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline
         );
 
         h.btnWish.setOnClickListener(v -> {
-            p.wish = !p.wish;
-            notifyItemChanged(h.getAdapterPosition());
+            p.setWish(!p.isWish());
+            notifyItemChanged(position);
         });
 
-        if (receivedSet.contains(p.title)) {
-            h.itemView.setAlpha(0.45f);
-            h.itemView.setBackgroundColor(0xFFF2F2F2);
+        if (receivedSet.contains(p.getTitle())) {
+            h.tvTitle.setTextColor(Color.GRAY);
+            h.tvTitle.setText("[이미 받은] " + p.getTitle());
         } else {
-            h.itemView.setAlpha(1f);
-            h.itemView.setBackgroundColor(0x00000000);
+            h.tvTitle.setTextColor(Color.BLACK);
         }
 
         h.itemView.setOnClickListener(v -> {
             Intent i = new Intent(v.getContext(), DetailActivity.class);
-            i.putExtra("productId", p.id);
+            i.putExtra("productId", p.getId());
             v.getContext().startActivity(i);
         });
     }
 
-    @Override
-    public int getItemCount() {
-        int header = hasHeader() ? 1 : 0;
-        return header + rec.size() + rest.size();
-    }
-
     static class HeaderVH extends RecyclerView.ViewHolder {
-        TextView title;
-        HeaderVH(@NonNull View itemView) {
-            super(itemView);
-            title = itemView.findViewById(android.R.id.text1);
-            title.setTextSize(16);
-            title.setPadding(24, 16, 24, 16);
+        TextView tv;
+        HeaderVH(View v) { 
+            super(v); 
+            tv = v.findViewById(R.id.tv_bar); 
         }
     }
 
-    static class ItemVH extends RecyclerView.ViewHolder {
+    static class ProductVH extends RecyclerView.ViewHolder {
         ImageView imgThumb;
         TextView tvTitle, tvPrice;
         ImageButton btnWish;
-
-        ItemVH(@NonNull View itemView) {
-            super(itemView);
-            imgThumb = itemView.findViewById(R.id.img_thumb);
-            tvTitle  = itemView.findViewById(R.id.tv_title);
-            tvPrice  = itemView.findViewById(R.id.tv_price);
-            btnWish  = itemView.findViewById(R.id.btn_wish);
+        ProductVH(View v) {
+            super(v);
+            imgThumb = v.findViewById(R.id.img_thumb);
+            tvTitle = v.findViewById(R.id.tv_title);
+            tvPrice = v.findViewById(R.id.tv_price);
+            btnWish = v.findViewById(R.id.btn_wish);
         }
     }
 }

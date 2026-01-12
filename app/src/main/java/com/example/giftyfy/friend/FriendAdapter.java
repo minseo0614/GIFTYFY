@@ -7,6 +7,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.giftyfy.FirebaseManager;
 import com.example.giftyfy.R;
 
 import java.util.List;
@@ -21,7 +22,6 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         void onRelationChanged();
     }
 
-    // 선물하러 가기 버튼 클릭 리스너 정의
     public interface OnGiftButtonClickListener {
         void onGiftClick(Friend friend);
     }
@@ -45,11 +45,16 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         Friend friend = friendList.get(position);
         holder.tvName.setText(friend.getName());
         holder.tvBirthday.setText(friend.getBirthday());
-        holder.tvRelation.setText(friend.getRelation());
+        
+        // 관계가 없으면 "미설정"으로 표시
+        String relation = friend.getRelation();
+        holder.tvRelation.setText((relation == null || relation.isEmpty()) ? "미설정" : relation);
 
         StringBuilder interestsText = new StringBuilder();
-        for (String interest : friend.getInterests()) {
-            interestsText.append("#").append(interest).append(" ");
+        if (friend.getInterests() != null) {
+            for (String interest : friend.getInterests()) {
+                interestsText.append("#").append(interest).append(" ");
+            }
         }
         holder.tvInterests.setText(interestsText.toString().trim());
 
@@ -61,7 +66,6 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
             holder.layoutExpandable.setVisibility(nextState ? View.VISIBLE : View.GONE);
         });
 
-        // 🎁 선물하러 가기 버튼 클릭 이벤트
         holder.btnGoToGift.setOnClickListener(v -> {
             if (giftListener != null) {
                 giftListener.onGiftClick(friend);
@@ -71,6 +75,12 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         View.OnClickListener tagClickListener = v -> {
             String newRelation = ((TextView) v).getText().toString();
             friend.setRelation(newRelation);
+            
+            // ✅ [수정] 친구 이름 대신 고유 ID(friend.getId())를 사용하여 저장합니다.
+            if (friend.getId() != null) {
+                FirebaseManager.getInstance().updateFriendRelation(friend.getId(), newRelation);
+            }
+            
             if (relationListener != null) {
                 relationListener.onRelationChanged();
             }
@@ -85,14 +95,14 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
 
     @Override
     public int getItemCount() {
-        return friendList.size();
+        return friendList == null ? 0 : friendList.size();
     }
 
     static class FriendViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvBirthday, tvRelation, tvInterests;
         TextView tagFamily, tagFriend, tagLove, tagWork, tagAwkward;
         View layoutExpandable;
-        View btnGoToGift; // 버튼 추가
+        View btnGoToGift;
 
         public FriendViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -101,7 +111,7 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
             tvRelation = itemView.findViewById(R.id.tvRelation);
             tvInterests = itemView.findViewById(R.id.tvInterests);
             layoutExpandable = itemView.findViewById(R.id.layoutExpandable);
-            btnGoToGift = itemView.findViewById(R.id.btnGoToGift); // 버튼 아이디 연결
+            btnGoToGift = itemView.findViewById(R.id.btnGoToGift);
             
             tagFamily = itemView.findViewById(R.id.tagFamily);
             tagFriend = itemView.findViewById(R.id.tagFriend);
