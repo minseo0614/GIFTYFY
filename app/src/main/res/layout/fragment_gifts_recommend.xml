@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- 1) 항상: 선물 -->
+    <!-- 항상: 선물 -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"
@@ -15,7 +15,17 @@
         android:padding="16dp"
         android:gravity="start"/>
 
-    <!-- 3) 이 안에서만 “친구1 추천 선물”이 뜨게 할 거임(헤더) -->
+    <!-- 친구로 들어왔을 때만 보이게 -->
+    <TextView
+        android:id="@+id/tvSubTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_mix"
         android:layout_width="match_parent"

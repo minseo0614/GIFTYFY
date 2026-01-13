@@ -6,16 +6,19 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.giftyfy.friend.Friend;
 import com.example.giftyfy.login.LoginActivity;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +33,7 @@ public class MyPageFragment extends Fragment {
     private RecyclerView rvCalendar;
     private RecyclerView rvReceivedGifts;
     private Calendar selectedDate;
+
     private ChipGroup cgMyInterests;
     private Button btnAddInterest;
     private Button btnLogout;
@@ -51,10 +55,14 @@ public class MyPageFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(
+            @NonNull View view,
+            @Nullable Bundle savedInstanceState
+    ) {
         super.onViewCreated(view, savedInstanceState);
 
         selectedDate = Calendar.getInstance();
+
         tvMonthTitle = view.findViewById(R.id.tvMonthTitle);
         rvCalendar = view.findViewById(R.id.rvCalendar);
         rvReceivedGifts = view.findViewById(R.id.rvReceivedGifts);
@@ -78,21 +86,37 @@ public class MyPageFragment extends Fragment {
         });
     }
 
+    // =======================
+    // 🔥 Firebase Profile Load
+    // =======================
     private void loadMyProfileFromServer() {
         FirebaseManager.getInstance().listenToMyProfile(data -> {
-            if (data != null) {
-                myName = (String) data.get("name");
-                myBirthday = (String) data.get("birthday");
-                List<String> loadedInterests = (List<String>) data.get("interests");
-                
-                if (loadedInterests != null) {
-                    myInterests = new ArrayList<>(loadedInterests);
-                    updateInterestsUI();
+            if (data == null) return;
+
+            myName = safeString(data.get("name"));
+            myBirthday = safeString(data.get("birthday"));
+
+            Object raw = data.get("interests");
+            if (raw instanceof List) {
+                myInterests = new ArrayList<>();
+                for (Object o : (List<?>) raw) {
+                    if (o instanceof String) {
+                        myInterests.add((String) o);
+                    }
                 }
             }
+
+            updateInterestsUI();
         });
     }
 
+    private String safeString(Object o) {
+        return o == null ? "" : o.toString();
+    }
+
+    // =======================
+    // 🎯 Interests UI
+    // =======================
     private void updateInterestsUI() {
         cgMyInterests.removeAllViews();
         for (String tag : myInterests) {
@@ -107,7 +131,7 @@ public class MyPageFragment extends Fragment {
         chip.setChipBackgroundColorResource(android.R.color.white);
         chip.setChipStrokeColorResource(R.color.black);
         chip.setChipStrokeWidth(1f);
-        
+
         chip.setOnCloseIconClickListener(v -> {
             myInterests.remove(tag);
             saveProfileToServer();
@@ -118,33 +142,40 @@ public class MyPageFragment extends Fragment {
     }
 
     private void showTagSelectDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("나의 취향 키워드 선택");
-        builder.setItems(availableTags, (dialog, which) -> {
-            String selectedTag = availableTags[which];
-            if (!myInterests.contains(selectedTag)) {
-                myInterests.add(selectedTag);
-                saveProfileToServer();
-                addTagChipToUI(selectedTag);
-            }
-        });
-        builder.show();
+        new AlertDialog.Builder(getContext())
+                .setTitle("나의 취향 키워드 선택")
+                .setItems(availableTags, (dialog, which) -> {
+                    String selectedTag = availableTags[which];
+                    if (!myInterests.contains(selectedTag)) {
+                        myInterests.add(selectedTag);
+                        saveProfileToServer();
+                        addTagChipToUI(selectedTag);
+                    }
+                })
+                .show();
     }
 
     private void saveProfileToServer() {
         if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
+
         String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
-        if (email != null) {
-            String userId = email.split("@")[0];
-            FirebaseManager.getInstance().saveMyProfile(userId, myName, myBirthday, myInterests);
-        }
+        if (email == null) return;
+
+        String userId = email.split("@")[0];
+
+        FirebaseManager.getInstance()
+                .saveMyProfile(userId, myName, myBirthday, myInterests);
     }
 
+    // =======================
+    // 📅 Calendar
+    // =======================
     private void setupCalendarButtons(View view) {
         view.findViewById(R.id.btnPrevMonth).setOnClickListener(v -> {
             selectedDate.add(Calendar.MONTH, -1);
             updateCalendar();
         });
+
         view.findViewById(R.id.btnNextMonth).setOnClickListener(v -> {
             selectedDate.add(Calendar.MONTH, 1);
             updateCalendar();
@@ -154,9 +185,13 @@ public class MyPageFragment extends Fragment {
     private void updateCalendar() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy년 MM월", Locale.KOREA);
         tvMonthTitle.setText(sdf.format(selectedDate.getTime()));
+
         List<String> daysInMonth = generateDaysInMonth(selectedDate);
         List<Friend> dummyFriends = getDummyFriends();
-        CalendarAdapter adapter = new CalendarAdapter(daysInMonth, dummyFriends, (Calendar) selectedDate.clone());
+
+        CalendarAdapter adapter =
+                new CalendarAdapter(daysInMonth, dummyFriends, (Calendar) selectedDate.clone());
+
         rvCalendar.setAdapter(adapter);
     }
 
@@ -164,36 +199,52 @@ public class MyPageFragment extends Fragment {
         List<String> dayList = new ArrayList<>();
         Calendar cal = (Calendar) calendar.clone();
         cal.set(Calendar.DAY_OF_MONTH, 1);
+
         int firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1;
-        int lastDayOfMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        int lastDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+
         for (int i = 0; i < firstDayOfWeek; i++) dayList.add("");
-        for (int i = 1; i <= lastDayOfMonth; i++) dayList.add(String.valueOf(i));
+        for (int i = 1; i <= lastDay; i++) dayList.add(String.valueOf(i));
+
         return dayList;
     }
 
+    // 더미 데이터 (나중에 서버 데이터로 교체 가능)
     private List<Friend> getDummyFriends() {
         List<Friend> friends = new ArrayList<>();
-        for (int i = 1; i <= 30; i++) {
-            Friend f = new Friend("친구" + i, "01-" + (i % 28 + 1), "미설정", Arrays.asList("태그"));
+        for (int i = 1; i <= 20; i++) {
+            Friend f = new Friend(
+                    "친구" + i,
+                    "01-" + (i % 28 + 1),
+                    "미설정",
+                    Arrays.asList("태그")
+            );
             f.setId(String.valueOf(i));
             friends.add(f);
         }
         return friends;
     }
 
+    // =======================
+    // 🎁 Received Gifts
+    // =======================
     private void setupReceivedGifts() {
-        rvReceivedGifts.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        rvReceivedGifts.setLayoutManager(
+                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false)
+        );
+
         List<Product> dummyProducts = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
             Product p = new Product();
-            // ✅ 필드 직접 접근 대신 Setter 사용
             p.setId(String.valueOf(i));
             p.setTitle("받은 선물 " + i);
             p.setPrice(20000 + (i * 5000));
             p.setCategory("선물");
             dummyProducts.add(p);
         }
-        ProductAdapter adapter = new ProductAdapter(dummyProducts);
+
+        ProductAdapter adapter = new ProductAdapter();
+        adapter.setItems(dummyProducts);
         rvReceivedGifts.setAdapter(adapter);
     }
 }

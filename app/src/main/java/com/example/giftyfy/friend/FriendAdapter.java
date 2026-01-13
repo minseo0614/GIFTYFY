@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -14,19 +15,22 @@ import java.util.List;
 
 public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendViewHolder> {
 
-    private List<Friend> friendList;
-    private OnRelationChangeListener relationListener;
-    private OnGiftButtonClickListener giftListener;
+    private final List<Friend> friendList;
+    private final OnRelationChangeListener relationListener;
+    private final OnGiftButtonClickListener giftListener;
 
     public interface OnRelationChangeListener {
         void onRelationChanged();
     }
 
+    // ✅ FriendsFragment에서 friend -> onFriendGiftClick(friend.getId(), friend.getName())로 받는 용도
     public interface OnGiftButtonClickListener {
         void onGiftClick(Friend friend);
     }
 
-    public FriendAdapter(List<Friend> friendList, OnRelationChangeListener relationListener, OnGiftButtonClickListener giftListener) {
+    public FriendAdapter(List<Friend> friendList,
+                         OnRelationChangeListener relationListener,
+                         OnGiftButtonClickListener giftListener) {
         this.friendList = friendList;
         this.relationListener = relationListener;
         this.giftListener = giftListener;
@@ -43,13 +47,15 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
     @Override
     public void onBindViewHolder(@NonNull FriendViewHolder holder, int position) {
         Friend friend = friendList.get(position);
+
         holder.tvName.setText(friend.getName());
         holder.tvBirthday.setText(friend.getBirthday());
-        
-        // 관계가 없으면 "미설정"으로 표시
+
+        // 관계 없으면 "미설정"
         String relation = friend.getRelation();
         holder.tvRelation.setText((relation == null || relation.isEmpty()) ? "미설정" : relation);
 
+        // interests -> "#태그 #태그" 형태로 출력
         StringBuilder interestsText = new StringBuilder();
         if (friend.getInterests() != null) {
             for (String interest : friend.getInterests()) {
@@ -58,6 +64,7 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         }
         holder.tvInterests.setText(interestsText.toString().trim());
 
+        // 펼침/접힘
         holder.layoutExpandable.setVisibility(friend.isExpanded() ? View.VISIBLE : View.GONE);
 
         holder.itemView.setOnClickListener(v -> {
@@ -66,21 +73,24 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
             holder.layoutExpandable.setVisibility(nextState ? View.VISIBLE : View.GONE);
         });
 
+        // ✅ 선물하러가기 버튼
         holder.btnGoToGift.setOnClickListener(v -> {
             if (giftListener != null) {
                 giftListener.onGiftClick(friend);
             }
         });
 
+        // ✅ 관계 태그 클릭 -> friend.relation 업데이트 + Firestore 저장 + 화면 갱신
         View.OnClickListener tagClickListener = v -> {
             String newRelation = ((TextView) v).getText().toString();
             friend.setRelation(newRelation);
-            
-            // ✅ [수정] 친구 이름 대신 고유 ID(friend.getId())를 사용하여 저장합니다.
-            if (friend.getId() != null) {
+            holder.tvRelation.setText(newRelation);
+
+            // friend 고유 id로 저장 (중요)
+            if (friend.getId() != null && !friend.getId().isEmpty()) {
                 FirebaseManager.getInstance().updateFriendRelation(friend.getId(), newRelation);
             }
-            
+
             if (relationListener != null) {
                 relationListener.onRelationChanged();
             }
@@ -106,13 +116,15 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
 
         public FriendViewHolder(@NonNull View itemView) {
             super(itemView);
+
             tvName = itemView.findViewById(R.id.tvName);
             tvBirthday = itemView.findViewById(R.id.tvBirthday);
             tvRelation = itemView.findViewById(R.id.tvRelation);
             tvInterests = itemView.findViewById(R.id.tvInterests);
+
             layoutExpandable = itemView.findViewById(R.id.layoutExpandable);
             btnGoToGift = itemView.findViewById(R.id.btnGoToGift);
-            
+
             tagFamily = itemView.findViewById(R.id.tagFamily);
             tagFriend = itemView.findViewById(R.id.tagFriend);
             tagLove = itemView.findViewById(R.id.tagLove);
