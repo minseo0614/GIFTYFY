@@ -31,9 +31,10 @@ import retrofit2.Response;
 
 public class GiftsRecommendFragment extends Fragment {
 
+    private static final String TAG = "GiftsRecommendFragment";
+
     private boolean fromFriend = false;
     private String friendName = "";
-
     private String relation = "미설정";
     private ArrayList<String> interests = new ArrayList<>();
     private ArrayList<String> receivedTitles = new ArrayList<>();
@@ -80,15 +81,13 @@ public class GiftsRecommendFragment extends Fragment {
             fromFriend = getArguments().getBoolean("fromFriend", false);
             friendName = getArguments().getString("friendName", "");
             relation = getArguments().getString("relation", "미설정");
-
-            ArrayList<String> ints = getArguments().getStringArrayList("interests");
-            ArrayList<String> rec = getArguments().getStringArrayList("receivedTitles");
-            if (ints != null) interests = ints;
-            if (rec != null) receivedTitles = rec;
+            interests = getArguments().getStringArrayList("interests");
+            receivedTitles = getArguments().getStringArrayList("receivedTitles");
+            if (interests == null) interests = new ArrayList<>();
+            if (receivedTitles == null) receivedTitles = new ArrayList<>();
         }
 
         rv = view.findViewById(R.id.rv_mix);
-
         GridLayoutManager glm = new GridLayoutManager(requireContext(), 2);
         glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
@@ -107,10 +106,12 @@ public class GiftsRecommendFragment extends Fragment {
 
     private void fetchProductsFromFirestore() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Log.d(TAG, "Step 1: Firestore 조회 시도...");
+        
         db.collection("products")
                 .get()
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
+                    if (task.isSuccessful() && task.getResult() != null) {
                         List<Product> allProducts = new ArrayList<>();
                         for (QueryDocumentSnapshot doc : task.getResult()) {
                             try {
@@ -118,164 +119,141 @@ public class GiftsRecommendFragment extends Fragment {
                                 p.setId(doc.getId());
                                 allProducts.add(p);
                             } catch (Exception e) {
-                                Log.e("GiftsRecommendFragment", "문서 변환 에러: " + doc.getId(), e);
+                                Log.e(TAG, "문서 변환 에러", e);
                             }
                         }
 
                         if (!allProducts.isEmpty()) {
-                            Log.d("GiftsRecommendFragment", "Firestore에서 " + allProducts.size() + "개의 상품 로드 성공");
-                            List<Product> recommended = buildRecommended(allProducts);
-                            adapter.setData(recommended, allProducts);
+                            Log.d(TAG, "Step 2: Firestore 데이터 로드 성공 (" + allProducts.size() + "개)");
+                            adapter.setData(new ArrayList<>(), allProducts);
                         } else {
-                            Log.d("GiftsRecommendFragment", "상품 데이터가 없어 API에서 가져옵니다.");
-                            fetchAndStoreFromApi();
+                            Log.d(TAG, "Step 2: Firestore가 비어있음 -> 네이버 API 호출 시작");
+                            fetchAndStoreFromNaverApi();
                         }
                     } else {
-                        Log.e("GiftsRecommendFragment", "Firestore 로드 에러: ", task.getException());
+                        Log.e(TAG, "Step 2: Firestore 접근 실패", task.getException());
                     }
                 });
     }
 
-    private void fetchAndStoreFromApi() {
+    private void fetchAndStoreFromNaverApi() {
+        Log.d(TAG, "Step 3: 네이버 API 호출 중...");
         ProductApi api = ApiClient.get().create(ProductApi.class);
-        api.getProducts().enqueue(new Callback<ProductResponse>() {
+
+        // "생일선물" 키워드로 100개 요청
+        api.searchShop("생일선물", 100, 1, "sim").enqueue(new Callback<NaverShoppingResponse>() {
             @Override
-            public void onResponse(@NonNull Call<ProductResponse> call, @NonNull Response<ProductResponse> response) {
+            public void onResponse(@NonNull Call<NaverShoppingResponse> call, @NonNull Response<NaverShoppingResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<Product> apiProducts = response.body().products;
-                    if (apiProducts != null && !apiProducts.isEmpty()) {
-                        Log.d("GiftsRecommendFragment", "API 응답 성공: " + apiProducts.size() + "개");
-                        
-                        // 1. 카테고리 다양성을 위해 리스트 섞기
-                        Collections.shuffle(apiProducts);
-                        
-                        // 2. 150개 추출 (또는 전체가 150개 미만이면 전체)
-                        int targetSize = Math.min(150, apiProducts.size());
-                        saveToFirestore(apiProducts.subList(0, targetSize));
+                    List<NaverShoppingResponse.NaverItem> items = response.body().items;
+                    if (items != null && !items.isEmpty()) {
+                        Log.d(TAG, "Step 4: 네이버 API 응답 성공 (아이템 " + items.size() + "개)");
+                        List<Product> mappedProducts = new ArrayList<>();
+                        for (NaverShoppingResponse.NaverItem item : items) {
+                            // 단순 세트 상품이 너무 많으면 필터링 (필요 시 조정 가능)
+                            if (item.title.contains("세트") || item.title.contains("구성") || item.title.contains("1+1")) {
+                                if (mappedProducts.size() > 20) continue; 
+                            }
+
+                            Product p = new Product();
+                            p.setTitle(item.title.replaceAll("<[^>]*>", "").trim());
+                            String pStr = item.lprice.replaceAll("[^0-9]", "");
+                            p.setPrice(pStr.isEmpty() ? 0 : Double.parseDouble(pStr));
+                            p.setThumbnail(item.image);
+                            p.setProductUrl(item.link); // ✅ 상세 페이지 URL 저장
+                            p.setCategory(safe(item.category1) + " " + safe(item.category2) + " " + safe(item.category3));
+
+                            enrichProduct(p);
+                            mappedProducts.add(p);
+                        }
+                        saveToFirestore(mappedProducts);
                     } else {
-                        Log.e("GiftsRecommendFragment", "API 응답은 성공했으나 상품 리스트가 비어있음");
+                        Log.w(TAG, "Step 4: 네이버 API 응답은 성공했으나 아이템이 비어있음");
                     }
                 } else {
-                    Log.e("GiftsRecommendFragment", "API 응답 실패: code=" + response.code());
+                    Log.e(TAG, "Step 4: 네이버 API 응답 실패 (Code: " + response.code() + ")");
                 }
             }
 
             @Override
-            public void onFailure(@NonNull Call<ProductResponse> call, @NonNull Throwable t) {
-                Log.e("GiftsRecommendFragment", "API 통신 실패 (네트워크 확인 필요)", t);
+            public void onFailure(@NonNull Call<NaverShoppingResponse> call, @NonNull Throwable t) {
+                Log.e(TAG, "Step 4: API 호출 에러", t);
             }
         });
     }
 
     private void saveToFirestore(List<Product> products) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        if (products.isEmpty()) {
+            Log.w(TAG, "저장할 상품 리스트가 비어있습니다.");
+            return;
+        }
         
-        // Firestore Batch는 한 번에 500개까지 가능하므로 150개는 한 번에 가능
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
         WriteBatch batch = db.batch();
-
+        
+        Log.d(TAG, "Step 5: Firestore Batch 저장 시작 (" + products.size() + "개)");
+        
         for (Product p : products) {
-            enrichProduct(p); // 환율 적용 및 정교한 태깅
             DocumentReference ref = db.collection("products").document();
             batch.set(ref, p);
         }
-
+        
         batch.commit().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                Log.d("GiftsRecommendFragment", "Firestore에 데이터 저장 완료 (" + products.size() + "개)");
-                if (isAdded()) {
-                    Toast.makeText(getContext(), "데이터베이스 구축 완료! (150개)", Toast.LENGTH_SHORT).show();
-                    fetchProductsFromFirestore();
+                Log.d(TAG, "Step 6: Firestore 저장 완료!");
+                if (isAdded() && getContext() != null) {
+                    Toast.makeText(getContext(), "데이터 저장 완료! (" + products.size() + "개)", Toast.LENGTH_SHORT).show();
+                    fetchProductsFromFirestore(); // 저장 후 다시 불러와서 UI 갱신
                 }
             } else {
-                Log.e("GiftsRecommendFragment", "Firestore 저장 실패", task.getException());
+                Log.e(TAG, "Step 6: Firestore 저장 실패", task.getException());
+                if (isAdded() && getContext() != null) {
+                    Toast.makeText(getContext(), "저장 실패: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                }
             }
         });
     }
 
     private void enrichProduct(Product p) {
-        // 1. 환율 적용 (USD -> KRW, 1200원) 및 100원 단위 반올림
-        double rawPrice = p.getPrice() * 1200;
-        double roundedPrice = Math.round(rawPrice / 100.0) * 100;
-        p.setPrice(roundedPrice);
-
-        String cat = safe(p.getCategory()).toLowerCase();
-        String title = safe(p.getTitle()).toLowerCase();
-        String desc = safe(p.getDescription()).toLowerCase();
-        String fullText = title + " " + cat + " " + desc;
-
+        String full = (p.getTitle() + " " + p.getCategory()).toLowerCase();
         List<String> tags = new ArrayList<>();
         Map<String, Integer> scores = new HashMap<>();
 
         // 기본 점수 설정
-        scores.put("연인", 10);
-        scores.put("가족", 10);
-        scores.put("친구", 10);
-        scores.put("회사 동료", 10);
+        scores.put("가족", 10); scores.put("친구", 10); scores.put("연인", 10); scores.put("회사", 10); scores.put("어사", 10);
 
-        // 2. 정교한 키워드 기반 태깅 및 관계 점수 설정
-        if (fullText.contains("perfume") || fullText.contains("fragrance") || fullText.contains("lipstick") || fullText.contains("jewelry")) {
-            tags.addAll(Arrays.asList("로맨틱성공적", "향기컬렉터", "기념일추천"));
+        if (match(full, "케이크", "마카롱", "초콜릿", "쿠키", "디저트")) {
+            tags.add("#디저트러버");
+            scores.put("친구", 30); scores.put("연인", 25);
+        }
+        if (match(full, "와인", "위스키", "전통주", "술")) {
+            tags.add("#애주가");
+            scores.put("친구", 30);
+        }
+        if (match(full, "향수", "디퓨저", "캔들", "핸드크림")) {
+            tags.add("#향기컬렉터");
             scores.put("연인", 30);
-            scores.put("친구", 15);
-        } else if (fullText.contains("laptop") || fullText.contains("smartphone") || fullText.contains("watch") || fullText.contains("tablet")) {
-            tags.addAll(Arrays.asList("얼리어답터", "기계덕후", "생산성최고"));
-            scores.put("연인", 20);
-            scores.put("친구", 25);
-            scores.put("가족", 15);
-        } else if (fullText.contains("skin") || fullText.contains("cream") || fullText.contains("serum") || fullText.contains("mask")) {
-            tags.addAll(Arrays.asList("피부관리진심러", "뷰티덕후", "자기관리"));
-            scores.put("친구", 20);
-            scores.put("연인", 20);
-        } else if (fullText.contains("kitchen") || fullText.contains("cooking") || fullText.contains("furniture") || fullText.contains("home")) {
-            tags.addAll(Arrays.asList("집꾸미기", "프로집사", "요리왕"));
+        }
+        if (match(full, "반지", "목걸이", "귀걸이", "팔찌", "쥬얼리", "주얼리")) {
+            tags.add("#주얼리수집가");
+            scores.put("연인", 30);
+        }
+        if (match(full, "샤프", "볼펜", "노트", "다이어리", "문구", "필기")) {
+            tags.add("#문구가좋아");
+            scores.put("친구", 25); scores.put("회사", 10); scores.put("연인", 5);
+        }
+        if (match(full, "영양제", "비타민", "홍삼")) {
+            tags.add("#영양제신봉자");
             scores.put("가족", 30);
-            scores.put("친구", 15);
-        } else if (fullText.contains("stationery") || fullText.contains("notebook") || fullText.contains("pen") || fullText.contains("office")) {
-            tags.addAll(Arrays.asList("데스크테리어", "열정회사원", "실용주의자"));
-            scores.put("회사 동료", 30);
-            scores.put("친구", 15);
-        } else if (fullText.contains("sport") || fullText.contains("gym") || fullText.contains("fitness") || fullText.contains("running")) {
-            tags.addAll(Arrays.asList("운동하는사람", "건강이최고", "오운완"));
-            scores.put("친구", 25);
-            scores.put("가족", 15);
-        } else {
-            tags.add("가성비갑");
-            tags.add("센스쟁이");
         }
 
-        // 중복 태그 제거 및 설정
-        Set<String> tagSet = new HashSet<>(tags);
-        p.setTags(new ArrayList<>(tagSet));
+        p.setTags(new ArrayList<>(new HashSet<>(tags)));
         p.setRelationScores(scores);
     }
 
-    private List<Product> buildRecommended(List<Product> all) {
-        Set<String> receivedSet = new HashSet<>(receivedTitles);
-        List<Product> copy = new ArrayList<>(all);
-        Collections.sort(copy, (a, b) -> {
-            int sa = score(a, relation, interests, receivedSet);
-            int sb = score(b, relation, interests, receivedSet);
-            return Integer.compare(sb, sa);
-        });
-        return new ArrayList<>(copy.subList(0, Math.min(8, copy.size())));
-    }
-
-    private int score(Product p, String relation, List<String> interests, Set<String> receivedSet) {
-        int s = 0;
-        s += p.getScoreForRelation(relation);
-        String text = (safe(p.getTitle()) + " " + safe(p.getCategory()) + " " + safe(p.getDescription())).toLowerCase();
-        
-        for (String it : interests) {
-            String key = it.replace("#", "").trim().toLowerCase();
-            if (text.contains(key)) s += 20; // 관심사 매칭 점수 상향
-        }
-
-        if (receivedSet.contains(p.getTitle())) s -= 999;
-        
-        // 원화 기준 가격 점수 (예: 10만원 이상이면 선물로서 가치 상승)
-        if (p.getPrice() >= 100000) s += 10;
-
-        return s;
+    private boolean match(String text, String... keywords) {
+        for (String k : keywords) { if (text.contains(k)) return true; }
+        return false;
     }
 
     private String safe(String s) { return (s == null) ? "" : s; }
