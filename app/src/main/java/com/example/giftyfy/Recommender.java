@@ -2,7 +2,6 @@ package com.example.giftyfy;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,16 +42,13 @@ public class Recommender {
 
     private static int getRelationScore(Product p, String relation) {
         try {
-            // Product 안에 relationScores 같은 맵이 있다고 가정
-            // (너가 이전에 쓰던 p.getRelationScores() 기준)
-            Map<String, ?> map = p.getRelationScores();
+            // Product의 relationScores가 Map<String, Integer>로 복구됨에 따라
+            // 안전하게 형변환하여 처리
+            Map<String, Integer> map = p.getRelationScores();
             if (map == null) return 0;
 
             Object v = map.get(relation);
             if (v instanceof Number) return ((Number) v).intValue();
-            if (v instanceof String) {
-                try { return Integer.parseInt((String) v); } catch (Exception ignore) {}
-            }
             return 0;
         } catch (Exception e) {
             return 0;
@@ -61,7 +57,7 @@ public class Recommender {
 
     private static int getTagScore(Product p, Set<String> interestSet) {
         try {
-            List<String> tags = p.getTags(); // Product에 tags 리스트가 있어야 함
+            List<String> tags = p.getTags(); 
             if (tags == null || tags.isEmpty()) return 0;
 
             int match = 0;

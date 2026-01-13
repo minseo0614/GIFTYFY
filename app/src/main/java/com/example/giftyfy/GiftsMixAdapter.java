@@ -84,7 +84,8 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         String title = (p.getTitle() == null) ? "" : p.getTitle();
         h.tvTitle.setText(title);
 
-        int price = p.getPrice();
+        // ✅ 수정: Product.getPrice()는 double을 반환하므로 타입을 double로 변경 (사용자의 Product 구조 유지)
+        double price = p.getPrice();
         h.tvPrice.setText(df.format(price) + "원");
 
         String thumb = p.getThumbnail();
