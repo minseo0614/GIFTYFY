@@ -14,6 +14,7 @@
 
         <!-- 1. 내 취향 태그 섹션 -->
         <TextView
+            android:id="@+id/tvMyInterestsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="나의 취향 키워드"
@@ -135,9 +136,34 @@
             android:clipToPadding="false"
             android:orientation="horizontal"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/item_gift_recommend" />
+            tools:listitem="@layout/item_product" />
 
-        <!-- 4. 로그아웃 버튼 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="24dp"
+            android:background="#E5E5EC" />
+
+        <!-- 4. 위시리스트 섹션 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="나의 위시리스트"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvWishlist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clipToPadding="false"
+            android:orientation="horizontal"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_product" />
+
+        <!-- 5. 로그아웃 버튼 -->
         <Button
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"

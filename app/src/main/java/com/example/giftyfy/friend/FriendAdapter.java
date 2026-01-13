@@ -1,16 +1,24 @@
 package com.example.giftyfy.friend;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.example.giftyfy.DetailActivity;
 import com.example.giftyfy.FirebaseManager;
+import com.example.giftyfy.Product;
 import com.example.giftyfy.R;
+import com.example.giftyfy.Recommender;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendViewHolder> {
@@ -23,7 +31,6 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         void onRelationChanged();
     }
 
-    // ✅ FriendsFragment에서 friend -> onFriendGiftClick(friend.getId(), friend.getName())로 받는 용도
     public interface OnGiftButtonClickListener {
         void onGiftClick(Friend friend);
     }
@@ -51,11 +58,9 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         holder.tvName.setText(friend.getName());
         holder.tvBirthday.setText(friend.getBirthday());
 
-        // 관계 없으면 "미설정"
         String relation = friend.getRelation();
         holder.tvRelation.setText((relation == null || relation.isEmpty()) ? "미설정" : relation);
 
-        // interests -> "#태그 #태그" 형태로 출력
         StringBuilder interestsText = new StringBuilder();
         if (friend.getInterests() != null) {
             for (String interest : friend.getInterests()) {
@@ -64,31 +69,35 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         }
         holder.tvInterests.setText(interestsText.toString().trim());
 
-        // 펼침/접힘
-        holder.layoutExpandable.setVisibility(friend.isExpanded() ? View.VISIBLE : View.GONE);
+        // 펼침/접힘 및 추천 데이터 로드
+        if (friend.isExpanded()) {
+            holder.layoutExpandable.setVisibility(View.VISIBLE);
+            loadRecommendationsForFriend(holder, friend);
+        } else {
+            holder.layoutExpandable.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             boolean nextState = !friend.isExpanded();
             friend.setExpanded(nextState);
-            holder.layoutExpandable.setVisibility(nextState ? View.VISIBLE : View.GONE);
+            notifyItemChanged(position);
         });
 
-        // ✅ 선물하러가기 버튼
         holder.btnGoToGift.setOnClickListener(v -> {
             if (giftListener != null) {
                 giftListener.onGiftClick(friend);
             }
         });
 
-        // ✅ 관계 태그 클릭 -> friend.relation 업데이트 + Firestore 저장 + 화면 갱신
         View.OnClickListener tagClickListener = v -> {
             String newRelation = ((TextView) v).getText().toString();
             friend.setRelation(newRelation);
             holder.tvRelation.setText(newRelation);
 
-            // friend 고유 id로 저장 (중요)
             if (friend.getId() != null && !friend.getId().isEmpty()) {
                 FirebaseManager.getInstance().updateFriendRelation(friend.getId(), newRelation);
+                // 관계가 바뀌면 추천 목록도 갱신되어야 함
+                notifyItemChanged(position);
             }
 
             if (relationListener != null) {
@@ -103,6 +112,45 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         holder.tagAwkward.setOnClickListener(tagClickListener);
     }
 
+    private void loadRecommendationsForFriend(FriendViewHolder holder, Friend friend) {
+        FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
+            @Override
+            public void onLoaded(List<Product> products) {
+                String relation = friend.getRelation() != null ? friend.getRelation() : "미설정";
+                List<String> interests = friend.getInterests() != null ? friend.getInterests() : new ArrayList<>();
+                
+                List<Product> top3 = Recommender.topN(products, relation, interests, 3);
+                
+                holder.layoutGiftList.removeAllViews();
+                for (Product p : top3) {
+                    View itemView = LayoutInflater.from(holder.itemView.getContext())
+                            .inflate(R.layout.item_gift_recommend, holder.layoutGiftList, false);
+                    
+                    ImageView iv = itemView.findViewById(R.id.ivGiftImage);
+                    TextView tv = itemView.findViewById(R.id.tvGiftName);
+                    
+                    tv.setText(p.getTitle());
+                    Glide.with(itemView.getContext()).load(p.getThumbnail()).into(iv);
+
+                    // 추천 아이템 클릭 시 상세 화면 이동
+                    itemView.setOnClickListener(v -> {
+                        Intent i = new Intent(v.getContext(), DetailActivity.class);
+                        i.putExtra("productId", p.getId());
+                        i.putExtra("targetFriendUid", friend.getId()); // 친구 ID 전달
+                        v.getContext().startActivity(i);
+                    });
+
+                    holder.layoutGiftList.addView(itemView);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                holder.layoutGiftList.removeAllViews();
+            }
+        });
+    }
+
     @Override
     public int getItemCount() {
         return friendList == null ? 0 : friendList.size();
@@ -113,6 +161,7 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
         TextView tagFamily, tagFriend, tagLove, tagWork, tagAwkward;
         View layoutExpandable;
         View btnGoToGift;
+        LinearLayout layoutGiftList; // ✅ 추가
 
         public FriendViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -124,6 +173,7 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendView
 
             layoutExpandable = itemView.findViewById(R.id.layoutExpandable);
             btnGoToGift = itemView.findViewById(R.id.btnGoToGift);
+            layoutGiftList = itemView.findViewById(R.id.layoutGiftList); // ✅ 추가
 
             tagFamily = itemView.findViewById(R.id.tagFamily);
             tagFriend = itemView.findViewById(R.id.tagFriend);

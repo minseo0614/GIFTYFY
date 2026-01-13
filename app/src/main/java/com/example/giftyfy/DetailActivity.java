@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,9 +14,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DecimalFormat;
+import java.util.List;
 
 public class DetailActivity extends AppCompatActivity {
 
@@ -23,23 +26,25 @@ public class DetailActivity extends AppCompatActivity {
     private ImageView imgMain;
     private TextView tvTitle, tvPrice, tvCategory, tvDesc;
     private Button btnGift;
+    private ImageButton btnLike;
     private MaterialToolbar toolbar;
     private final DecimalFormat df = new DecimalFormat("#,###");
+
+    private boolean isLiked = false;
+    private String productId;
+    private String targetFriendUid; // ✅ 추가
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 
-        // ✅ 툴바 설정 및 뒤로가기 버튼 활성화
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
-        
-        // 툴바의 뒤로가기 버튼 클릭 이벤트
         toolbar.setNavigationOnClickListener(v -> finish());
 
         imgMain = findViewById(R.id.img);
@@ -48,14 +53,20 @@ public class DetailActivity extends AppCompatActivity {
         tvCategory = findViewById(R.id.tv_category);
         tvDesc = findViewById(R.id.tv_desc);
         btnGift = findViewById(R.id.btn_gift);
+        btnLike = findViewById(R.id.btn_like);
 
-        String pid = getIntent().getStringExtra("productId");
-        if (pid == null || pid.isEmpty()) {
+        productId = getIntent().getStringExtra("productId");
+        targetFriendUid = getIntent().getStringExtra("targetFriendUid"); // ✅ 추가
+
+        if (productId == null || productId.isEmpty()) {
             finish();
             return;
         }
 
-        fetchProductDetailDirectly(pid);
+        fetchProductDetailDirectly(productId);
+        checkWishlistStatus();
+
+        btnLike.setOnClickListener(v -> toggleLike());
     }
 
     private void fetchProductDetailDirectly(String pid) {
@@ -75,6 +86,32 @@ public class DetailActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.e(TAG, "Firestore error", e));
     }
 
+    private void checkWishlistStatus() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        FirebaseManager.getInstance().getUserByUid(uid, data -> {
+            if (data != null) {
+                List<String> wishlist = (List<String>) data.get("wishlist");
+                if (wishlist != null && wishlist.contains(productId)) {
+                    isLiked = true;
+                    btnLike.setImageResource(R.drawable.ic_heart_filled);
+                } else {
+                    isLiked = false;
+                    btnLike.setImageResource(R.drawable.ic_heart_outline);
+                }
+            }
+        });
+    }
+
+    private void toggleLike() {
+        isLiked = !isLiked;
+        btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        FirebaseManager.getInstance().toggleWishlist(productId, isLiked);
+        String msg = isLiked ? "위시리스트에 추가되었습니다." : "위시리스트에서 제거되었습니다.";
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
     private void updateUI(Product p) {
         tvTitle.setText(p.getTitle());
         tvPrice.setText(df.format(p.getPrice()) + "원");
@@ -85,9 +122,15 @@ public class DetailActivity extends AppCompatActivity {
 
         if (btnGift != null) {
             btnGift.setOnClickListener(v -> {
+                // ✅ 1. DB 추가 로직 (친구가 지정된 경우)
+                if (targetFriendUid != null && !targetFriendUid.isEmpty()) {
+                    FirebaseManager.getInstance().addReceivedGiftToUser(targetFriendUid, productId);
+                    Toast.makeText(this, "친구의 선물 목록에 추가되었습니다!", Toast.LENGTH_SHORT).show();
+                }
+
+                // ✅ 2. 쇼핑몰 이동 로직
                 String rawUrl = p.getProductUrl();
                 if (rawUrl != null && !rawUrl.isEmpty()) {
-                    // 실제 기기에서 테스트 완료된 로직 (필요 시 Html.fromHtml 추가 가능)
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(rawUrl));
                     startActivity(intent);
                 } else {

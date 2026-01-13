@@ -1,15 +1,21 @@
 package com.example.giftyfy;
 
+import android.content.Intent;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -17,13 +23,32 @@ import java.util.List;
 
 public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final int TYPE_HEADER = 0;
-    private static final int TYPE_PRODUCT = 1;
+    public static final int TYPE_HEADER = 0;
+    public static final int TYPE_PRODUCT = 1;
 
     private final List<Row> rows = new ArrayList<>();
+    private final List<String> receivedGiftIds = new ArrayList<>();
+    private final List<String> wishlistIds = new ArrayList<>(); // ✅ 내 위시리스트 목록
     private final DecimalFormat df = new DecimalFormat("#,###");
 
-    // ✅ 기본 모드: 전체 상품만
+    private String targetFriendUid = null;
+
+    public void setTargetFriendUid(String uid) {
+        this.targetFriendUid = uid;
+    }
+
+    public void setReceivedGiftIds(List<String> ids) {
+        this.receivedGiftIds.clear();
+        if (ids != null) this.receivedGiftIds.addAll(ids);
+        notifyDataSetChanged();
+    }
+
+    public void setWishlistIds(List<String> ids) {
+        this.wishlistIds.clear();
+        if (ids != null) this.wishlistIds.addAll(ids);
+        notifyDataSetChanged();
+    }
+
     public void setModeDefault(List<Product> all) {
         rows.clear();
         rows.add(Row.header("전체 선물"));
@@ -33,20 +58,15 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         notifyDataSetChanged();
     }
 
-    // ✅ 친구 모드: 추천 6개 + 전체
     public void setModeFriend(List<Product> recommended, List<Product> all) {
         rows.clear();
-
-        rows.add(Row.header("추천 선물"));
         if (recommended != null) {
             for (Product p : recommended) rows.add(Row.product(p));
         }
-
         rows.add(Row.header("전체 선물"));
         if (all != null) {
             for (Product p : all) rows.add(Row.product(p));
         }
-
         notifyDataSetChanged();
     }
 
@@ -81,12 +101,8 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         ProductVH h = (ProductVH) holder;
         Product p = row.product;
 
-        String title = (p.getTitle() == null) ? "" : p.getTitle();
-        h.tvTitle.setText(title);
-
-        // ✅ 수정: Product.getPrice()는 double을 반환하므로 타입을 double로 변경 (사용자의 Product 구조 유지)
-        double price = p.getPrice();
-        h.tvPrice.setText(df.format(price) + "원");
+        h.tvTitle.setText(p.getTitle() == null ? "" : p.getTitle());
+        h.tvPrice.setText(df.format(p.getPrice()) + "원");
 
         String thumb = p.getThumbnail();
         if (thumb != null && !thumb.isEmpty()) {
@@ -94,6 +110,51 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         } else {
             h.imgThumb.setImageDrawable(null);
         }
+
+        // ✅ 1. 친구가 받은 선물 처리 (회색)
+        boolean isReceived = receivedGiftIds.contains(p.getId());
+        if (isReceived) {
+            h.itemView.setAlpha(0.4f);
+            ColorMatrix matrix = new ColorMatrix();
+            matrix.setSaturation(0);
+            h.imgThumb.setColorFilter(new ColorMatrixColorFilter(matrix));
+            h.itemView.setClickable(false);
+            if (h.btnWish != null) h.btnWish.setVisibility(View.GONE);
+        } else {
+            h.itemView.setAlpha(1.0f);
+            h.imgThumb.setColorFilter(null);
+            h.itemView.setClickable(true);
+            if (h.btnWish != null) h.btnWish.setVisibility(View.VISIBLE);
+        }
+
+        // ✅ 2. 내 위시리스트 처리 (하트)
+        boolean isWished = wishlistIds.contains(p.getId());
+        if (h.btnWish != null && !isReceived) {
+            h.btnWish.setImageResource(isWished ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+            h.btnWish.setOnClickListener(v -> {
+                if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
+                
+                boolean nextState = !isWished;
+                FirebaseManager.getInstance().toggleWishlist(p.getId(), nextState);
+                
+                if (nextState) {
+                    if (!wishlistIds.contains(p.getId())) wishlistIds.add(p.getId());
+                } else {
+                    wishlistIds.remove(p.getId());
+                }
+                notifyItemChanged(position);
+                Toast.makeText(v.getContext(), nextState ? "위시리스트 추가" : "위시리스트 제거", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        h.itemView.setOnClickListener(v -> {
+            Intent i = new Intent(v.getContext(), DetailActivity.class);
+            i.putExtra("productId", p.getId());
+            if (targetFriendUid != null) {
+                i.putExtra("targetFriendUid", targetFriendUid);
+            }
+            v.getContext().startActivity(i);
+        });
     }
 
     @Override
@@ -112,12 +173,14 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     static class ProductVH extends RecyclerView.ViewHolder {
         ImageView imgThumb;
         TextView tvTitle, tvPrice;
+        ImageButton btnWish; // ✅ 추가
 
         ProductVH(@NonNull View itemView) {
             super(itemView);
             imgThumb = itemView.findViewById(R.id.img_thumb);
             tvTitle = itemView.findViewById(R.id.tv_title);
             tvPrice = itemView.findViewById(R.id.tv_price);
+            btnWish = itemView.findViewById(R.id.btn_wish); // ✅ 추가
         }
     }
 
@@ -125,19 +188,11 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         boolean isHeader;
         String headerText;
         Product product;
-
         static Row header(String text) {
-            Row r = new Row();
-            r.isHeader = true;
-            r.headerText = text;
-            return r;
+            Row r = new Row(); r.isHeader = true; r.headerText = text; return r;
         }
-
         static Row product(Product p) {
-            Row r = new Row();
-            r.isHeader = false;
-            r.product = p;
-            return r;
+            Row r = new Row(); r.isHeader = false; r.product = p; return r;
         }
     }
 }

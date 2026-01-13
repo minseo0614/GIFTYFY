@@ -7,11 +7,13 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -20,12 +22,24 @@ import java.util.List;
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
 
     private final List<Product> items = new ArrayList<>();
+    private final List<String> wishlistIds = new ArrayList<>(); // ✅ 내 위시리스트 ID 목록
     private final DecimalFormat df = new DecimalFormat("#,###");
+    private String targetFriendUid = null;
 
-    // ✅ GiftsFragment에서 이걸로 리스트 넣기
+    public void setTargetFriendUid(String uid) {
+        this.targetFriendUid = uid;
+    }
+
     public void setItems(List<Product> products) {
         items.clear();
         if (products != null) items.addAll(products);
+        notifyDataSetChanged();
+    }
+
+    // ✅ 위시리스트 정보 갱신
+    public void setWishlistIds(List<String> ids) {
+        wishlistIds.clear();
+        if (ids != null) wishlistIds.addAll(ids);
         notifyDataSetChanged();
     }
 
@@ -42,13 +56,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
         Product p = items.get(position);
 
         h.tvTitle.setText(p.getTitle() == null ? "" : p.getTitle());
-        
-        // ✅ 가격 포맷팅 적용: 천단위 , 추가 및 .0 삭제
         h.tvPrice.setText(df.format(p.getPrice()) + "원");
 
-        // ✅ Firestore 필드: thumbnail
         String thumb = p.getThumbnail();
-
         Glide.with(h.itemView.getContext())
                 .load(thumb)
                 .centerCrop()
@@ -56,11 +66,41 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
                 .error(R.drawable.ic_launcher_foreground)
                 .into(h.imgThumb);
 
-        if (h.btnWish != null) h.btnWish.setVisibility(View.GONE);
+        // ✅ 1. 위시리스트 상태 표시
+        boolean isWished = wishlistIds.contains(p.getId());
+        if (h.btnWish != null) {
+            h.btnWish.setVisibility(View.VISIBLE);
+            h.btnWish.setImageResource(isWished ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+            
+            // ✅ 2. 위시리스트 버튼 클릭 이벤트
+            h.btnWish.setOnClickListener(v -> {
+                if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                    Toast.makeText(v.getContext(), "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                boolean nextState = !isWished;
+                FirebaseManager.getInstance().toggleWishlist(p.getId(), nextState);
+                
+                // 로컬 상태 즉시 반영 (선택 사항: 서버 리스너가 있으면 자동으로 다시 불릴 것임)
+                if (nextState) {
+                    if (!wishlistIds.contains(p.getId())) wishlistIds.add(p.getId());
+                } else {
+                    wishlistIds.remove(p.getId());
+                }
+                notifyItemChanged(position);
+                
+                String msg = nextState ? "위시리스트에 추가되었습니다." : "위시리스트에서 제거되었습니다.";
+                Toast.makeText(v.getContext(), msg, Toast.LENGTH_SHORT).show();
+            });
+        }
 
         h.itemView.setOnClickListener(v -> {
             Intent i = new Intent(v.getContext(), DetailActivity.class);
             i.putExtra("productId", p.getId());
+            if (targetFriendUid != null) {
+                i.putExtra("targetFriendUid", targetFriendUid);
+            }
             v.getContext().startActivity(i);
         });
     }
