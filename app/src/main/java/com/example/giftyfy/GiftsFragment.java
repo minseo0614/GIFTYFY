@@ -30,7 +30,6 @@ public class GiftsFragment extends Fragment {
     private ProductAdapter adapter;
     private TextView tvGiftHeader;
 
-    // ✅ inner class final 문제 방지
     private final List<String> friendInterests = new ArrayList<>();
 
     public GiftsFragment() {
@@ -73,6 +72,9 @@ public class GiftsFragment extends Fragment {
             friendName = getArguments().getString(ARG_FRIEND_NAME, "");
         }
 
+        // ✅ 내 위시리스트 실시간 리스닝 추가
+        loadMyWishlist();
+
         if (!fromFriend) {
             tvGiftHeader.setVisibility(View.GONE);
             loadAllProducts();
@@ -83,11 +85,21 @@ public class GiftsFragment extends Fragment {
         }
     }
 
+    private void loadMyWishlist() {
+        FirebaseManager.getInstance().listenToMyProfile(data -> {
+            if (data != null) {
+                List<String> wishlist = (List<String>) data.get("wishlist");
+                if (adapter != null) {
+                    adapter.setWishlistIds(wishlist);
+                }
+            }
+        });
+    }
+
     private void loadAllProducts() {
         FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
             @Override
             public void onLoaded(List<Product> products) {
-                Log.d("GiftsFragment", "all products=" + (products == null ? 0 : products.size()));
                 adapter.setItems(products);
             }
 
@@ -100,7 +112,6 @@ public class GiftsFragment extends Fragment {
     }
 
     private void loadTop6ForFriend() {
-        // 1) 친구 interests 불러오기
         FirebaseManager.getInstance().getUserByUid(friendUid, new FirebaseManager.OnUserLoadedListener() {
             @Override
             public void onLoaded(Map<String, Object> userData) {
@@ -108,17 +119,13 @@ public class GiftsFragment extends Fragment {
                 if (userData != null) {
                     Object raw = userData.get("interests");
                     if (raw instanceof List) {
-                        //noinspection unchecked
                         friendInterests.addAll((List<String>) raw);
                     }
                 }
 
-                // 2) 내가 그 친구를 설정한 relation 불러오기
                 FirebaseManager.getInstance().getMyFriendRelation(friendUid, new FirebaseManager.OnRelationLoadedListener() {
                     @Override
                     public void onLoaded(String relation) {
-
-                        // 3) products 불러와서 알고리즘으로 top6 계산
                         FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
                             @Override
                             public void onLoaded(List<Product> products) {
@@ -129,7 +136,6 @@ public class GiftsFragment extends Fragment {
                             @Override
                             public void onError(Exception e) {
                                 Log.e("GiftsFragment", "getAllProducts error", e);
-                                Toast.makeText(getContext(), "상품 불러오기 실패", Toast.LENGTH_SHORT).show();
                             }
                         });
                     }
@@ -137,7 +143,6 @@ public class GiftsFragment extends Fragment {
                     @Override
                     public void onError(Exception e) {
                         Log.e("GiftsFragment", "getMyFriendRelation error", e);
-                        Toast.makeText(getContext(), "관계 불러오기 실패", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -145,7 +150,6 @@ public class GiftsFragment extends Fragment {
             @Override
             public void onError(Exception e) {
                 Log.e("GiftsFragment", "getUserByUid error", e);
-                Toast.makeText(getContext(), "친구 정보 불러오기 실패", Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class GiftsRecommendFragment extends Fragment {
 
@@ -23,11 +24,11 @@ public class GiftsRecommendFragment extends Fragment {
     private String friendUid;
     private String friendName;
 
-    private ProductAdapter adapter;
+    private GiftsMixAdapter adapter;
     private TextView tvGiftHeader;
 
     public GiftsRecommendFragment() {
-        super(R.layout.fragment_gifts); // 너가 올린 fragment_gifts.xml 그대로 사용
+        super(R.layout.fragment_gifts); 
     }
 
     public static GiftsRecommendFragment newInstance(String friendUid, String friendName) {
@@ -56,12 +57,25 @@ public class GiftsRecommendFragment extends Fragment {
         tvGiftHeader = view.findViewById(R.id.tvGiftHeader);
 
         RecyclerView rv = view.findViewById(R.id.rv_products);
-        rv.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        
+        // ✅ GridLayoutManager 설정: 헤더는 전체 너비(2칸)를 차지하도록 설정
+        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
+        layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                // 어댑터에서 현재 아이템이 헤더인지 확인하여 Span 크기 결정
+                if (adapter != null && adapter.getItemViewType(position) == GiftsMixAdapter.TYPE_HEADER) {
+                    return 2; // 헤더는 2칸 모두 차지
+                }
+                return 1; // 일반 상품은 1칸만 차지
+            }
+        });
+        
+        rv.setLayoutManager(layoutManager);
 
-        adapter = new ProductAdapter();
+        adapter = new GiftsMixAdapter();
         rv.setAdapter(adapter);
 
-        // ✅ "OO 추천 선물" 표시
         if (friendName != null && !friendName.isEmpty()) {
             tvGiftHeader.setVisibility(View.VISIBLE);
             tvGiftHeader.setText(friendName + " 추천 선물");
@@ -70,42 +84,54 @@ public class GiftsRecommendFragment extends Fragment {
             tvGiftHeader.setText("추천 선물");
         }
 
-        loadTop6();
+        loadData();
     }
 
-    private void loadTop6() {
+    private void loadData() {
         if (friendUid == null || friendUid.isEmpty()) {
             Toast.makeText(getContext(), "친구 정보가 없어요", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        FirebaseManager.getInstance().getFriendContext(friendUid, new FirebaseManager.OnFriendContextLoadedListener() {
+        FirebaseManager.getInstance().getUserByUid(friendUid, new FirebaseManager.OnUserLoadedListener() {
             @Override
-            public void onLoaded(String relation, ArrayList<String> interests) {
-                final String rel = (relation == null || relation.isEmpty()) ? "미설정" : relation;
-                final ArrayList<String> ints = (interests == null) ? new ArrayList<>() : interests;
+            public void onLoaded(Map<String, Object> userData) {
+                List<String> receivedIds = (List<String>) userData.get("receivedGifts");
+                adapter.setReceivedGiftIds(receivedIds);
 
-                Log.d("Reco", "friendUid=" + friendUid + ", relation=" + rel + ", interests=" + ints.size());
+                final ArrayList<String> interests = new ArrayList<>();
+                Object rawInts = userData.get("interests");
+                if (rawInts instanceof List) {
+                    interests.addAll((List<String>) rawInts);
+                }
 
-                FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
+                FirebaseManager.getInstance().getMyFriendRelation(friendUid, new FirebaseManager.OnRelationLoadedListener() {
                     @Override
-                    public void onLoaded(List<Product> products) {
-                        List<Product> top6 = Recommender.topN(products, rel, ints, 6);
-                        adapter.setItems(top6); // ✅ 절대 products 전체를 넣지 말 것
+                    public void onLoaded(String relation) {
+                        FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
+                            @Override
+                            public void onLoaded(List<Product> allProducts) {
+                                List<Product> top6 = Recommender.topN(allProducts, relation, interests, 6);
+                                adapter.setModeFriend(top6, allProducts);
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                Log.e("Reco", "getAllProducts error", e);
+                            }
+                        });
                     }
 
                     @Override
                     public void onError(Exception e) {
-                        Log.e("Reco", "getAllProducts error", e);
-                        Toast.makeText(getContext(), "상품 불러오기 실패", Toast.LENGTH_SHORT).show();
+                        Log.e("Reco", "getMyFriendRelation error", e);
                     }
                 });
             }
 
             @Override
             public void onError(Exception e) {
-                Log.e("Reco", "getFriendContext error", e);
-                Toast.makeText(getContext(), "친구 정보 불러오기 실패", Toast.LENGTH_SHORT).show();
+                Log.e("Reco", "getUserByUid error", e);
             }
         });
     }
