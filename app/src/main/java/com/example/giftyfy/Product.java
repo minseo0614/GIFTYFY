@@ -4,6 +4,22 @@ import java.util.List;
 import java.util.Map;
 
 public class Product {
+    @DocumentId
+    private String id;
+    
+    private String title;
+    private double price;
+    private String thumbnail;
+    private String description;
+    private String category;
+    private String productUrl; // ✅ 상품 상세 페이지 URL 추가
+    
+    private List<String> tags = new ArrayList<>();
+    
+    @Exclude
+    private boolean wish = false;
+    
+    private Map<String, Integer> relationScores = new HashMap<>();
 
     private String id;                 // 문서 id (수동으로 setId)
     private String title;              // 이름
@@ -18,7 +34,7 @@ public class Product {
     // ✅ Firestore용 필수: 빈 생성자
     public Product() {}
 
-    // ---- getter / setter ----
+    // Getter/Setter
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -34,9 +50,9 @@ public class Product {
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
+    public String getProductUrl() { return productUrl; } // ✅ 추가
+    public void setProductUrl(String productUrl) { this.productUrl = productUrl; } // ✅ 추가
+    
     public List<String> getTags() { return tags; }
     public void setTags(List<String> tags) { this.tags = tags; }
 
