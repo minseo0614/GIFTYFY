@@ -18,15 +18,18 @@ import com.example.giftyfy.FirebaseManager;
 import com.example.giftyfy.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity {
 
     private EditText etId, etPw, etPwConfirm, etName;
-    private TextView tvPwCheck;
+    private TextView tvPwCheck, tvIdError; // ✅ tvIdError 추가
     private Spinner spYear, spMonth, spDay;
     private Button btnSignUp;
     private ImageButton btnBack;
@@ -45,6 +48,7 @@ public class SignUpActivity extends AppCompatActivity {
         etPwConfirm = findViewById(R.id.et_pw_confirm);
         etName = findViewById(R.id.et_name);
         tvPwCheck = findViewById(R.id.tv_pw_check);
+        tvIdError = findViewById(R.id.tv_id_error);
         spYear = findViewById(R.id.sp_year);
         spMonth = findViewById(R.id.sp_month);
         spDay = findViewById(R.id.sp_day);
@@ -59,11 +63,19 @@ public class SignUpActivity extends AppCompatActivity {
         }
 
         btnSignUp.setOnClickListener(v -> performSignUp());
+        
+        // 아이디 입력 시 에러 메시지 자동 숨김 처리
+        etId.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (tvIdError != null) tvIdError.setVisibility(View.GONE);
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
     }
 
     private void setupSpinners() {
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-        
         List<String> years = new ArrayList<>();
         years.add("년도");
         for (int i = currentYear; i >= currentYear - 100; i--) years.add(String.valueOf(i));
@@ -76,19 +88,9 @@ public class SignUpActivity extends AppCompatActivity {
         days.add("일");
         for (int i = 1; i <= 31; i++) days.add(String.format("%02d", i));
 
-        // ✅ 커스텀 레이아웃을 사용하여 스피너 스타일 통일
-        ArrayAdapter<String> yearAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, years);
-        ArrayAdapter<String> monthAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, months);
-        ArrayAdapter<String> dayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, days);
-
-        spYear.setAdapter(yearAdapter);
-        spMonth.setAdapter(monthAdapter);
-        spDay.setAdapter(dayAdapter);
-        
-        // 스피너 배경에 화살표 리소스 적용
-        spYear.setBackgroundResource(R.drawable.bg_spinner);
-        spMonth.setBackgroundResource(R.drawable.bg_spinner);
-        spDay.setBackgroundResource(R.drawable.bg_spinner);
+        spYear.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, years));
+        spMonth.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, months));
+        spDay.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, days));
     }
 
     private void setupPwCheck() {
@@ -110,7 +112,7 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     private void performSignUp() {
-        String userId = etId.getText().toString().trim(); // ✅ 입력한 값 그대로 아이디로 사용
+        String userId = etId.getText().toString().trim();
         String pw = etPw.getText().toString().trim();
         String pw2 = etPwConfirm.getText().toString().trim();
         String name = etName.getText().toString().trim();
@@ -130,7 +132,22 @@ public class SignUpActivity extends AppCompatActivity {
             return;
         }
 
-        // Firebase Auth를 위해 내부적으로만 이메일 형식 사용
+        // ✅ 1. 아이디 중복 체크 (Firestore 쿼리)
+        FirebaseFirestore.getInstance().collection("users")
+                .whereEqualTo("userId", userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                        // 중복된 아이디가 있음
+                        if (tvIdError != null) tvIdError.setVisibility(View.VISIBLE);
+                    } else {
+                        // 중복 없음 -> 계정 생성 진행
+                        createFirebaseAccount(userId, pw, name);
+                    }
+                });
+    }
+
+    private void createFirebaseAccount(String userId, String pw, String name) {
         String internalEmail = userId + "@giftify.com";
         String birthday = spYear.getSelectedItem() + "-" + spMonth.getSelectedItem() + "-" + spDay.getSelectedItem();
 
@@ -139,13 +156,27 @@ public class SignUpActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = auth.getCurrentUser();
                         if (user != null) {
-                            // ✅ Firestore에는 입력한 userId 그대로 저장
-                            FirebaseManager.getInstance().saveMyProfile(userId, name, birthday, new ArrayList<>());
-                            Toast.makeText(SignUpActivity.this, "회원가입 성공!", Toast.LENGTH_SHORT).show();
-                            finish();
+                            Map<String, Object> profile = new HashMap<>();
+                            profile.put("userId", userId);
+                            profile.put("name", name);
+                            profile.put("birthday", birthday);
+                            profile.put("interests", new ArrayList<String>());
+                            profile.put("profileUrl", "");
+
+                            FirebaseFirestore.getInstance().collection("users").document(user.getUid())
+                                    .set(profile)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(SignUpActivity.this, "회원가입 성공!", Toast.LENGTH_SHORT).show();
+                                        finish();
+                                    });
                         }
                     } else {
-                        Toast.makeText(SignUpActivity.this, "회원가입 실패: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        String errorMsg = task.getException() != null ? task.getException().getMessage() : "실패";
+                        if (errorMsg != null && errorMsg.contains("already in use")) {
+                            if (tvIdError != null) tvIdError.setVisibility(View.VISIBLE);
+                        } else {
+                            Toast.makeText(SignUpActivity.this, "회원가입 실패: " + errorMsg, Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
     }

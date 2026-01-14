@@ -25,7 +25,7 @@
             android:textSize="28sp"
             android:textStyle="bold" />
 
-        <!-- ✅ Title 밑 구분선 -->
+        <!-- Title 밑 구분선 -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -51,7 +51,7 @@
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:src="@android:drawable/ic_menu_today"
+                    android:src="@drawable/ic_cake"
                     app:tint="#D080B6" />
 
                 <TextView

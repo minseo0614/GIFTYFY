@@ -28,7 +28,7 @@ public class FirebaseManager {
     private final String COLLECTION_USERS = "users";
     private final String COLLECTION_PRODUCTS = "products";
     private final String SUB_COLLECTION_FRIENDS = "myFriends";
-    private final String SUB_COLLECTION_ANNIVERSARIES = "anniversaries"; // ✅ 추가
+    private final String SUB_COLLECTION_ANNIVERSARIES = "anniversaries";
 
     private FirebaseManager() {
         db = FirebaseFirestore.getInstance();
@@ -40,9 +40,7 @@ public class FirebaseManager {
         return instance;
     }
 
-    // -----------------------------
-    // ✅ Anniversary (기념일) 관리
-    // -----------------------------
+    // Anniversary (기념일) 관리
     
     // 기념일 추가
     public void addAnniversary(String title, int month, int day, String personUid, String memo, boolean isRepeat) {
@@ -64,7 +62,7 @@ public class FirebaseManager {
                 .addOnFailureListener(e -> Log.e("FirebaseManager", "Error adding anniversary", e));
     }
 
-    // 기념일 목록 가져오기 (실시간 리스닝)
+    // 기념일 목록 가져오기
     public void listenToAnniversaries(OnAnniversariesLoadedListener listener) {
         FirebaseUser user = auth.getCurrentUser();
         if (user == null) return;
@@ -89,7 +87,6 @@ public class FirebaseManager {
         void onLoaded(List<Anniversary> list);
     }
 
-    // (기존 메서드들 보존...)
     public void getAllProducts(OnProductsLoadedListener listener) {
         db.collection(COLLECTION_PRODUCTS).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {

@@ -40,7 +40,7 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
-    <!-- ✅ Title 밑 구분선 -->
+    <!-- Title 밑 구분선 -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
@@ -67,8 +67,9 @@
 
         <EditText
             android:id="@+id/etSearch"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_weight="1"
             android:layout_marginStart="12dp"
             android:background="@android:color/transparent"
             android:hint="선물 검색"
@@ -77,6 +78,17 @@
             android:textColor="#333333"
             android:textColorHint="#999999"
             android:textSize="15sp" />
+
+        <!-- ✅ 검색어 삭제 버튼 (X 표시) 추가 -->
+        <ImageButton
+            android:id="@+id/btnClearSearch"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:visibility="gone"
+            app:tint="#999999"
+            tools:visibility="visible" />
     </LinearLayout>
 
     <!-- 친구 추천 헤더 -->

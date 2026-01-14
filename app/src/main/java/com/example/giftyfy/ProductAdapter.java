@@ -26,9 +26,14 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
     private final List<String> wishlistIds = new ArrayList<>();
     private final DecimalFormat df = new DecimalFormat("#,###");
     private String targetFriendUid = null;
+    private boolean useMiniLayout = false;
 
     public void setTargetFriendUid(String uid) {
         this.targetFriendUid = uid;
+    }
+
+    public void setUseMiniLayout(boolean mini) { // ✅ 추가
+        this.useMiniLayout = mini;
     }
 
     public void setItems(List<Product> products) {
@@ -46,8 +51,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_product, parent, false);
+        int layoutId = useMiniLayout ? R.layout.item_product_mini : R.layout.item_product;
+        View v = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
         return new VH(v);
     }
 
@@ -71,7 +76,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
             h.btnWish.setVisibility(View.VISIBLE);
             h.btnWish.setImageResource(isWished ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
             
-            // ✅ [해결] 선택 시 진한 핑크색(#D080B6) 적용
             if (isWished) {
                 h.btnWish.setColorFilter(Color.parseColor("#D080B6"));
             } else {

@@ -155,9 +155,27 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
                     String pUrl = doc.getString("profileUrl");
 
                     if (tvName != null) tvName.setText(friendName != null ? friendName : "");
-                    if (tvBirthday != null) tvBirthday.setText(bday != null ? bday : "");
-                    if (ivProfile != null && pUrl != null && !pUrl.isEmpty()) {
-                        Glide.with(this).load(pUrl).circleCrop().into(ivProfile);
+                    
+                    // 생일 포맷팅 (MM월 dd일)
+                    if (tvBirthday != null && bday != null && bday.contains("-")) {
+                        String[] parts = bday.split("-");
+                        if (parts.length >= 3) {
+                            tvBirthday.setText(Integer.parseInt(parts[1]) + "월 " + Integer.parseInt(parts[2]) + "일");
+                        } else {
+                            tvBirthday.setText(bday);
+                        }
+                    }
+
+                    // ✅ [해결] 상세 창 프로필 사진도 리스트와 동일하게 ic_person으로 통일
+                    if (ivProfile != null) {
+                        if (pUrl != null && !pUrl.isEmpty()) {
+                            Glide.with(this).load(pUrl).circleCrop().into(ivProfile);
+                        } else {
+                            // 리스트와 동일한 스타일 적용
+                            ivProfile.setImageResource(R.drawable.ic_person);
+                            ivProfile.setBackgroundResource(R.drawable.bg_pill_soft);
+                            ivProfile.setPadding(12, 12, 12, 12);
+                        }
                     }
                     
                     friendInterests = getListFromDoc(doc, "interests");

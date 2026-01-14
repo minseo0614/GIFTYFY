@@ -1,11 +1,14 @@
 package com.example.giftyfy;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +36,7 @@ public class GiftsFragment extends Fragment {
     private ProductAdapter adapter;
     private TextView tvGiftHeader;
     private EditText etSearch;
+    private ImageButton btnClearSearch; 
 
     private final List<Product> allProductsList = new ArrayList<>();
     private final List<String> friendInterests = new ArrayList<>();
@@ -55,6 +59,7 @@ public class GiftsFragment extends Fragment {
 
         tvGiftHeader = view.findViewById(R.id.tvGiftHeader);
         etSearch = view.findViewById(R.id.etSearch);
+        btnClearSearch = view.findViewById(R.id.btnClearSearch); 
 
         recyclerView = view.findViewById(R.id.rv_products);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
@@ -84,9 +89,28 @@ public class GiftsFragment extends Fragment {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                     filterProducts(s.toString());
+                    if (btnClearSearch != null) {
+                        btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                    }
                 }
                 @Override public void afterTextChanged(Editable s) {}
             });
+        }
+
+        if (btnClearSearch != null) {
+            btnClearSearch.setOnClickListener(v -> {
+                if (etSearch != null) {
+                    etSearch.setText(""); 
+                    hideKeyboard(etSearch);
+                }
+            });
+        }
+    }
+
+    private void hideKeyboard(View view) {
+        if (view != null && getContext() != null) {
+            InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 
