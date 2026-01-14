@@ -119,7 +119,7 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
                     else if (checkedId == R.id.chipFriend) newRel = "친구";
                     else if (checkedId == R.id.chipLove) newRel = "연인";
                     else if (checkedId == R.id.chipWork) newRel = "동료";
-                    else if (checkedId == R.id.chipAwkward) newRel = "어사"; // ✅ "어색" -> "어사"
+                    else if (checkedId == R.id.chipAwkward) newRel = "어사";
                 }
                 
                 friendRelation = newRel;
@@ -171,7 +171,7 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
                                     if (!isAdded()) return;
                                     friendRelation = relDoc.exists() ? relDoc.getString("relation") : "미설정";
                                     setRelationToggle(friendRelation);
-                                    updateRecommendations(); 
+                                    updateRecommendations();
                                 });
                     }
                 });
@@ -232,7 +232,7 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
             case "친구": id = R.id.chipFriend; break;
             case "연인": id = R.id.chipLove; break;
             case "동료": id = R.id.chipWork; break;
-            case "어사": id = R.id.chipAwkward; break; // ✅ "어색" -> "어사"
+            case "어사": id = R.id.chipAwkward; break;
         }
         if (id != -1) {
             groupRelation.check(id);
