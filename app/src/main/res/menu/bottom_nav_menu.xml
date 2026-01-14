@@ -6,7 +6,7 @@
         android:title="Friends" />
     <item
         android:id="@+id/nav_gifts"
-        android:icon="@android:drawable/ic_menu_set_as"
+        android:icon="@drawable/ic_gift"
         android:title="Gifts" />
     <item
         android:id="@+id/nav_mypage"

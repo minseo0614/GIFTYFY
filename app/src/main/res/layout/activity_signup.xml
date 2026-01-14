@@ -42,7 +42,6 @@
             android:orientation="vertical"
             android:padding="24dp">
 
-            <!-- GIFTYFY 제목 -->
             <TextView
                 android:id="@+id/tv_signup_title"
                 android:layout_width="match_parent"
@@ -64,7 +63,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="아이디 (이메일)"
+                    android:text="아이디"
                     android:textStyle="bold"
                     android:textColor="#333333"
                     android:layout_marginBottom="8dp"/>
@@ -74,10 +73,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:paddingHorizontal="16dp"
-                    android:inputType="textEmailAddress"
+                    android:inputType="text"
                     android:background="@drawable/bg_search"
                     android:backgroundTint="#FBF7F9"
-                    android:hint="example@giftyfy.com"
+                    android:textColor="#333333"
                     android:layout_marginBottom="20dp" />
 
                 <TextView
@@ -96,6 +95,7 @@
                     android:inputType="textPassword"
                     android:background="@drawable/bg_search"
                     android:backgroundTint="#FBF7F9"
+                    android:textColor="#333333"
                     android:layout_marginBottom="20dp"/>
 
                 <TextView
@@ -109,7 +109,7 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="4dp">
+                    android:layout_marginBottom="24dp">
 
                     <EditText
                         android:id="@+id/et_pw_confirm"
@@ -118,7 +118,8 @@
                         android:paddingHorizontal="16dp"
                         android:inputType="textPassword"
                         android:background="@drawable/bg_search"
-                        android:backgroundTint="#FBF7F9"/>
+                        android:backgroundTint="#FBF7F9"
+                        android:textColor="#333333"/>
 
                     <TextView
                         android:id="@+id/tv_pw_check"
@@ -133,8 +134,6 @@
                         android:textSize="12sp"
                         android:visibility="gone"/>
                 </RelativeLayout>
-                
-                <View android:layout_width="match_parent" android:layout_height="16dp" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -152,7 +151,8 @@
                     android:inputType="textPersonName"
                     android:background="@drawable/bg_search"
                     android:backgroundTint="#FBF7F9"
-                    android:layout_marginBottom="20dp" />
+                    android:textColor="#333333"
+                    android:layout_marginBottom="24dp" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -172,8 +172,7 @@
                         android:layout_width="0dp"
                         android:layout_height="48dp"
                         android:layout_weight="1.2"
-                        android:background="@drawable/bg_search"
-                        android:backgroundTint="#FBF7F9"/>
+                        android:background="@drawable/bg_spinner"/>
 
                     <Spinner
                         android:id="@+id/sp_month"
@@ -181,8 +180,7 @@
                         android:layout_height="48dp"
                         android:layout_weight="1"
                         android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_search"
-                        android:backgroundTint="#FBF7F9"/>
+                        android:background="@drawable/bg_spinner"/>
 
                     <Spinner
                         android:id="@+id/sp_day"
@@ -190,8 +188,7 @@
                         android:layout_height="48dp"
                         android:layout_weight="1"
                         android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_search"
-                        android:backgroundTint="#FBF7F9"/>
+                        android:background="@drawable/bg_spinner"/>
                 </LinearLayout>
 
             </LinearLayout>

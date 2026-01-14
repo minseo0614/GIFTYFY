@@ -1,5 +1,7 @@
 package com.example.giftyfy.friend;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
@@ -20,6 +22,7 @@ import com.example.giftyfy.R;
 import com.example.giftyfy.Recommender;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -116,7 +119,7 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
                     else if (checkedId == R.id.chipFriend) newRel = "친구";
                     else if (checkedId == R.id.chipLove) newRel = "연인";
                     else if (checkedId == R.id.chipWork) newRel = "동료";
-                    else if (checkedId == R.id.chipAwkward) newRel = "어사"; // ✅ '어색' -> '어사' 수정
+                    else if (checkedId == R.id.chipAwkward) newRel = "어사";
                 }
                 
                 friendRelation = newRel;
@@ -126,7 +129,8 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
                 if (myUid != null && !friendUid.isEmpty()) {
                     Map<String, Object> data = new HashMap<>();
                     data.put("relation", newRel);
-                    FirebaseFirestore.getInstance().collection("users").document(myUid)
+                    FirebaseFirestore.getInstance()
+                            .collection("users").document(myUid)
                             .collection("myFriends").document(friendUid)
                             .set(data, SetOptions.merge())
                             .addOnSuccessListener(aVoid -> {
@@ -210,7 +214,10 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
             ImageView img = item.findViewById(R.id.ivGiftImage);
 
             if (name != null) name.setText(p.getTitle());
-            if (price != null) price.setText(String.format(Locale.KOREA, "%,.0f원", p.getPrice()));
+            if (price != null) {
+                price.setText(String.format(Locale.KOREA, "%,.0f원", p.getPrice()));
+                price.setTextColor(Color.parseColor("#D080B6"));
+            }
             if (img != null) Glide.with(this).load(p.getThumbnail()).into(img);
 
             layoutRecommend.addView(item);
@@ -225,13 +232,13 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
             case "친구": id = R.id.chipFriend; break;
             case "연인": id = R.id.chipLove; break;
             case "동료": id = R.id.chipWork; break;
-            case "어사": // ✅ '어사'로 들어오는 경우
-            case "어색": // ✅ 기존 데이터 '어색' 하위 호환
-                id = R.id.chipAwkward;
-                break;
+            case "어사": id = R.id.chipAwkward; break;
         }
-        if (id != -1) groupRelation.check(id);
-        else groupRelation.clearCheck();
+        if (id != -1) {
+            groupRelation.check(id);
+        } else {
+            groupRelation.clearCheck();
+        }
     }
 
     private void renderTags(List<String> tags) {
@@ -243,7 +250,10 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
             if (t == null || t.isEmpty()) continue;
             View chipView = inf.inflate(R.layout.item_chip_tag, layoutInterestTags, false);
             TextView tv = chipView.findViewById(R.id.tvTag);
-            if (tv != null) tv.setText(String.format("#%s", t));
+            if (tv != null) {
+                tv.setText(String.format("#%s", t));
+                tv.setTextColor(Color.parseColor("#D080B6"));
+            }
             layoutInterestTags.addView(chipView);
         }
     }
@@ -268,7 +278,10 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
                 ImageView i = item.findViewById(R.id.ivGiftImage);
                 Double pVal = pdoc.getDouble("price");
                 if (n != null) n.setText(pdoc.getString("title"));
-                if (pr != null && pVal != null) pr.setText(String.format(Locale.KOREA, "%,.0f원", pVal));
+                if (pr != null && pVal != null) {
+                    pr.setText(String.format(Locale.KOREA, "%,.0f원", pVal));
+                    pr.setTextColor(Color.parseColor("#D080B6"));
+                }
                 if (i != null) Glide.with(this).load(pdoc.getString("thumbnail")).into(i);
             });
             layoutWishlist.addView(item);
