@@ -133,4 +133,4 @@ GIFTYFY는 친구와의 관계, 취향, 위시리스트 데이터를 기반으�
 4. **최종 점수 정렬**: 모든 상품의 점수를 계산 후 상위 N개 추천
 
 ## APK 다운로드
-[다운로드](https://github.com/minseo0614/GIFTYFY/raw/main/app-debug.apk)
+[다운로드](https://github.com/minseo0614/GIFTYFY/raw/master/app-debug.apk)
