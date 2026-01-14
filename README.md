@@ -60,7 +60,8 @@ GIFTYFY는 친구와의 관계, 취향, 위시리스트 데이터를 기반으�
 ## 📱 주요 기능
 
 ### Tab 0. 회원가입 및 로그인
-<img src="images/mad_week1_tap0.gif" width = "20%">
+
+<img src="images/mad_week1_tap0.gif" width="20%">
 
 * **회원가입**
     * 닉네임(userId), 생일
@@ -72,7 +73,9 @@ GIFTYFY는 친구와의 관계, 취향, 위시리스트 데이터를 기반으�
     * 로그인 상태가 유지되므로 위시리스트/설정값/기념일 기록 등이 그대로 남음
 
 ### Tab 1. 친구 리스트 (Friends)
-<img src="images/mad_week1_tap1.gif" width = "20%">
+
+<img src="images/mad_week1_tap1.gif" width="20%">
+
 * **친구 전체 목록**
     * 다른 앱 사용자들을 리스트로 보여주는 메인 화면
     * 각 친구 별 기본 정보 표시: 이름, 생일
@@ -91,7 +94,9 @@ GIFTYFY는 친구와의 관계, 취향, 위시리스트 데이터를 기반으�
     * 추천 알고리즘 결과 상위 6개 상품 보여줌
 
 ### Tab 2. 선물 리스트 (Gifts)
-<img src="images/mad_week1_tap2.gif" width = "20%">
+
+<img src="images/mad_week1_tap2.gif" width="20%">
+
 * **선물 목록 (갤러리 뷰)**
     * 이미지 + 상품명 + 가격 + 위시리스트 버튼으로 구성
     * 일반 모드: 전체 상품 탐색
@@ -107,7 +112,9 @@ GIFTYFY는 친구와의 관계, 취향, 위시리스트 데이터를 기반으�
     * “선물하기” 버튼 → 네이버 스토어 상품 URL로 연결
 
 ### Tab 3. 마이페이지 (My Page)
-<img src="images/mad_week1_tap3.gif" width = "20%">
+
+<img src="images/mad_week1_tap3.gif" width="20%">
+
 * **내 취향 키워드 설정**
     * 취향 키워드 선택 → 다른 친구가 나에게 선물 추천할 때 반영됨
 * **나의 위시 리스트**
