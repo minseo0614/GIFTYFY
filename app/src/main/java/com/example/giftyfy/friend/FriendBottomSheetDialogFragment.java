@@ -116,11 +116,11 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
                     else if (checkedId == R.id.chipFriend) newRel = "친구";
                     else if (checkedId == R.id.chipLove) newRel = "연인";
                     else if (checkedId == R.id.chipWork) newRel = "동료";
-                    else if (checkedId == R.id.chipAwkward) newRel = "어색";
+                    else if (checkedId == R.id.chipAwkward) newRel = "어사"; // ✅ '어색' -> '어사' 수정
                 }
                 
                 friendRelation = newRel;
-                updateRecommendations(); // ✅ 관계 변경 시 추천 목록 실시간 업데이트
+                updateRecommendations();
 
                 String myUid = FirebaseAuth.getInstance().getUid();
                 if (myUid != null && !friendUid.isEmpty()) {
@@ -160,7 +160,6 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
                     renderTags(friendInterests);
                     renderWishlist(getListFromDoc(doc, "wishlist"));
                     
-                    // 전역 users doc 로드 후 관계 정보 가져오기
                     if (myUid != null) {
                         FirebaseFirestore.getInstance().collection("users").document(myUid)
                                 .collection("myFriends").document(friendUid).get()
@@ -168,7 +167,7 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
                                     if (!isAdded()) return;
                                     friendRelation = relDoc.exists() ? relDoc.getString("relation") : "미설정";
                                     setRelationToggle(friendRelation);
-                                    updateRecommendations(); // ✅ 모든 정보 로드 후 추천 실행
+                                    updateRecommendations();
                                 });
                     }
                 });
@@ -181,7 +180,6 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
             @Override
             public void onLoaded(List<Product> allProducts) {
                 if (!isAdded()) return;
-                // ✅ Recommender를 통해 이 친구에게 맞는 Top 6 계산
                 List<Product> top6 = Recommender.topN(allProducts, friendRelation, friendInterests, 6);
                 renderRecommendations(top6);
             }
@@ -227,7 +225,10 @@ public class FriendBottomSheetDialogFragment extends BottomSheetDialogFragment {
             case "친구": id = R.id.chipFriend; break;
             case "연인": id = R.id.chipLove; break;
             case "동료": id = R.id.chipWork; break;
-            case "어색": id = R.id.chipAwkward; break;
+            case "어사": // ✅ '어사'로 들어오는 경우
+            case "어색": // ✅ 기존 데이터 '어색' 하위 호환
+                id = R.id.chipAwkward;
+                break;
         }
         if (id != -1) groupRelation.check(id);
         else groupRelation.clearCheck();

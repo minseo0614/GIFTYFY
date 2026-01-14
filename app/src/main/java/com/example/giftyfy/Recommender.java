@@ -39,8 +39,7 @@ public class Recommender {
             int relationScore = getRelationScore(p, friendRelation);
             int tagMatch = countTagMatches(p, interestSet);
 
-            // ✅ [수정] 관계 점수가 0이더라도 태그 매칭이 있으면 후보군에 포함
-            // 관계 점수가 아예 없는 '어색', '미설정' 등도 관심사 기반으로 추천될 수 있게 함
+            // 관계 점수가 아예 없는 '어사', '미설정' 등도 관심사 기반으로 추천될 수 있게 함
             if (relationScore <= 0 && tagMatch <= 0) continue;
 
             double coverage = 0.0;
@@ -54,7 +53,6 @@ public class Recommender {
             candidates.add(new Scored(p, score, tagMatch, relationScore));
         }
 
-        // 점수 높은 순 정렬
         Collections.sort(candidates, (a, b) -> {
             if (b.score != a.score) return b.score - a.score;
             if (b.tagMatch != a.tagMatch) return b.tagMatch - a.tagMatch;
@@ -77,7 +75,6 @@ public class Recommender {
             result.add(s.p);
         }
 
-        // 부족하면 후보군 중 중복되지 않은 것을 무작위로 채움
         if (result.size() < n) {
             for (Scored s : candidates) {
                 if (result.size() >= n) break;
@@ -85,7 +82,6 @@ public class Recommender {
             }
         }
         
-        // 그래도 부족하면(상품이 적을 때) 전체 리스트에서 보충
         if (result.size() < n) {
             for (Product p : allProducts) {
                 if (result.size() >= n) break;
@@ -100,11 +96,10 @@ public class Recommender {
         Map<String, Integer> map = p.getRelationScores();
         if (map == null) return 0;
         
-        // ✅ [개선] 데이터베이스에 관계 정보가 명시적으로 없을 때의 기본값 처리
         Integer v = map.get(relation);
         if (v != null) return v;
         
-        // '미설정', '어색', '동료' 등이 Map에 없을 때 기본 점수 1 부여 (태그 매칭을 위해 노출 기회 제공)
+        // '미설정', '어사' 등이 Map에 없을 때 기본 점수 1 부여
         return 1; 
     }
 

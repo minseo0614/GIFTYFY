@@ -26,6 +26,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.giftyfy.friend.Friend;
 import com.example.giftyfy.login.LoginActivity;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
@@ -66,6 +68,7 @@ public class MyPageFragment extends Fragment {
     private String myBirthday = "";
     private List<String> myInterests = new ArrayList<>();
     private List<Friend> realFriends = new ArrayList<>();
+    private List<Anniversary> anniversaries = new ArrayList<>();
 
     private ReceivedGiftAdapter receivedAdapter; 
     private ProductAdapter wishAdapter;
@@ -99,6 +102,7 @@ public class MyPageFragment extends Fragment {
         setupRecyclerViews();
         loadMyProfileFromServer();
         loadRealFriendsFromServer();
+        loadAnniversariesFromServer();
         setupCalendarButtons(view);
 
         btnAddInterest.setOnClickListener(v -> showTagSelectBottomSheet());
@@ -151,10 +155,30 @@ public class MyPageFragment extends Fragment {
 
         dialogView.findViewById(R.id.btnAdd).setOnClickListener(v -> {
             EditText etTitle = dialogView.findViewById(R.id.etAnniversaryTitle);
-            if (etTitle.getText().toString().isEmpty()) {
+            EditText etMemo = dialogView.findViewById(R.id.etMemo);
+            MaterialButtonToggleGroup toggleRepeat = dialogView.findViewById(R.id.toggleRepeat);
+            
+            String title = etTitle.getText().toString().trim();
+            if (title.isEmpty()) {
                 Toast.makeText(getContext(), "기념일 제목을 입력해주세요.", Toast.LENGTH_SHORT).show();
                 return;
             }
+
+            int month = Integer.parseInt(spMonth.getSelectedItem().toString());
+            int day = Integer.parseInt(spDay.getSelectedItem().toString());
+            String personName = spPerson.getSelectedItem().toString();
+            String personUid = "";
+            for (Friend f : realFriends) {
+                if (f.getName().equals(personName)) {
+                    personUid = f.getId();
+                    break;
+                }
+            }
+            String memo = etMemo.getText().toString();
+            boolean isRepeat = (toggleRepeat.getCheckedButtonId() == R.id.btnRepeatYear);
+
+            FirebaseManager.getInstance().addAnniversary(title, month, day, personUid, memo, isRepeat);
+            
             Toast.makeText(getContext(), "기념일이 추가되었습니다!", Toast.LENGTH_SHORT).show();
             dialog.dismiss();
         });
@@ -219,6 +243,18 @@ public class MyPageFragment extends Fragment {
         });
     }
 
+    private void loadAnniversariesFromServer() {
+        FirebaseManager.getInstance().listenToAnniversaries(list -> {
+            if (list != null && isAdded()) {
+                this.anniversaries = list;
+                updateCalendar();
+                // 현재 선택된 날짜의 공지 갱신
+                // 일단 오늘 날짜 기준으로 초기화
+                updateBirthdayNotice(Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
+            }
+        });
+    }
+
     private void updateBirthdayNotice(int day) {
         if (cgBirthdayFriends == null || tvBirthdayNoticeLabel == null || tvNoBirthdayFriend == null) return;
         cgBirthdayFriends.removeAllViews();
@@ -229,21 +265,34 @@ public class MyPageFragment extends Fragment {
                            day == todayCal.get(Calendar.DAY_OF_MONTH));
 
         String datePrefix = isToday ? "오늘" : day + "일";
+        tvBirthdayNoticeLabel.setText(datePrefix + "의 일정");
 
-        if (isToday) {
-            tvBirthdayNoticeLabel.setText("오늘 생일인 친구");
-        } else {
-            tvBirthdayNoticeLabel.setText(day + "일 생일인 친구");
-        }
-
-        tvNoBirthdayFriend.setText(datePrefix + " 생일인 친구가 없습니다!");
-
-        String mmdd = String.format(Locale.KOREA, "%02d-%02d", selectedDate.get(Calendar.MONTH) + 1, day);
+        int month = selectedDate.get(Calendar.MONTH) + 1;
+        String mmdd = String.format(Locale.KOREA, "%02d-%02d", month, day);
 
         boolean found = false;
+
+        // 1. 생일인 친구 체크
         for (Friend f : realFriends) {
             if (f.getBirthday() != null && f.getBirthday().contains(mmdd)) {
                 addBirthdayFriendChip(f);
+                found = true;
+            }
+        }
+
+        // 2. ✅ 기념일 체크 및 추가
+        for (Anniversary a : anniversaries) {
+            if (a.getMonth() == month && a.getDay() == day) {
+                String personName = "";
+                if (a.getPersonUid() != null && !a.getPersonUid().isEmpty()) {
+                    for (Friend f : realFriends) {
+                        if (f.getId().equals(a.getPersonUid())) {
+                            personName = " (with " + f.getName() + ")";
+                            break;
+                        }
+                    }
+                }
+                addAnniversaryEventChip(a.getTitle() + personName);
                 found = true;
             }
         }
@@ -252,14 +301,15 @@ public class MyPageFragment extends Fragment {
             tvBirthdayNoticeLabel.setVisibility(View.VISIBLE);
             tvNoBirthdayFriend.setVisibility(View.GONE);
         } else {
-            tvBirthdayNoticeLabel.setVisibility(View.GONE);
+            tvBirthdayNoticeLabel.setVisibility(View.VISIBLE); // 일정을 항상 보여주거나, 없으면 숨김
+            tvNoBirthdayFriend.setText(datePrefix + " 일정이 없습니다!");
             tvNoBirthdayFriend.setVisibility(View.VISIBLE);
         }
     }
 
     private void addBirthdayFriendChip(Friend friend) {
         Chip chip = new Chip(getContext());
-        chip.setText(friend.getName());
+        chip.setText("🎂 " + friend.getName() + " 생일");
         chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FBF7F9")));
         chip.setTextColor(ColorStateList.valueOf(Color.BLACK));
         chip.setChipStrokeWidth(0f);
@@ -269,6 +319,17 @@ public class MyPageFragment extends Fragment {
                 ((MainActivity) getActivity()).onFriendGiftClick(friend.getId(), friend.getName());
             }
         });
+        cgBirthdayFriends.addView(chip);
+    }
+
+    // ✅ 기념일 전용 칩 추가 메서드
+    private void addAnniversaryEventChip(String text) {
+        Chip chip = new Chip(getContext());
+        chip.setText("📅 " + text);
+        chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#ECEBFF"))); // 연보라색
+        chip.setTextColor(ColorStateList.valueOf(Color.parseColor("#9A97F3")));
+        chip.setChipStrokeWidth(0f);
+        chip.setChipCornerRadius(999f);
         cgBirthdayFriends.addView(chip);
     }
 
@@ -377,7 +438,7 @@ public class MyPageFragment extends Fragment {
         tvMonthTitle.setText(sdf.format(selectedDate.getTime()));
         List<String> daysInMonth = generateDaysInMonth(selectedDate);
         
-        CalendarAdapter adapter = new CalendarAdapter(daysInMonth, realFriends, (Calendar) selectedDate.clone(), (day, birthdayNames) -> {
+        CalendarAdapter adapter = new CalendarAdapter(daysInMonth, realFriends, anniversaries, (Calendar) selectedDate.clone(), (day, eventNames) -> {
             updateBirthdayNotice(day);
         });
         rvCalendar.setAdapter(adapter);
