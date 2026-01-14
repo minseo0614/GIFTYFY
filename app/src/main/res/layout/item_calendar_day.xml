@@ -1,44 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="70dp"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:background="?attr/selectableItemBackground">
+    android:layout_height="64dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <TextView
-        android:id="@+id/tvDay"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="25"
-        android:textColor="#333333"
-        android:textSize="14sp" />
+    <!-- 오늘 날짜 강조용 연핑크 배경 -->
+    <View
+        android:id="@+id/viewTodayBg"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_pill_soft"
+        android:backgroundTint="#FAF4F6"
+        android:visibility="gone" />
 
-    <!-- 생일인 날에 보일 아이콘과 이름 묶음 -->
     <LinearLayout
-        android:id="@+id/layoutBirthdayInfo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
         android:gravity="center"
-        android:visibility="invisible">
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
-        <TextView
+        <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🎂"
-            android:textSize="10sp" />
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
+            <TextView
+                android:id="@+id/tvDay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="28"
+                android:textColor="#333333"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:padding="2dp" />
+
+            <!-- ✅ 우상단 핑크 점: 위치를 조금 더 안쪽으로 조정하고 클리핑 방지 -->
+            <View
+                android:id="@+id/viewDot"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_toEndOf="@id/tvDay"
+                android:layout_alignTop="@id/tvDay"
+                android:layout_marginStart="-2dp"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/bg_pill_primary"
+                android:backgroundTint="#D080B6"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+        <!-- 텍스트 정보는 숨김 (점과 하단 리스트로 대체) -->
         <TextView
             android:id="@+id/tvBirthdayName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="2dp"
-            android:text="이름"
-            android:textColor="#9A97F3"
-            android:textSize="9sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:textSize="0sp"
+            android:visibility="gone" />
     </LinearLayout>
 
-</LinearLayout>
+</FrameLayout>

@@ -55,7 +55,6 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // 회원가입 때와 동일한 방식으로 가상 이메일 생성
         String fakeEmail = userId + "@giftify.com";
 
         mAuth.signInWithEmailAndPassword(fakeEmail, password)

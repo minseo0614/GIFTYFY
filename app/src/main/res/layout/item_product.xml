@@ -1,54 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp">
+    android:layout_margin="8dp"
+    android:backgroundTint="#FFFFFF"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#F0F0F0">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="10dp">
+        android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/img_thumb"
+        <!-- 이미지 + 하트 버튼 + 받은 선물 오버레이 -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="140dp"
-            android:scaleType="centerCrop"
-            android:contentDescription="thumbnail"/>
+            android:layout_height="180dp">
 
-        <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:paddingTop="8dp"
-            android:maxLines="2"/>
+            <ImageView
+                android:id="@+id/img_thumb"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="#F8F8F8"
+                tools:ignore="ContentDescription" />
 
-        <TextView
-            android:id="@+id/tv_price"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:paddingTop="4dp"/>
+            <!-- ✅ 받은 선물 안내 오버레이 -->
+            <TextView
+                android:id="@+id/tvReceivedOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#80000000"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="친구가 이미\n받은 선물입니다!"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <!-- 위시리스트 버튼 -->
+            <ImageButton
+                android:id="@+id/btn_wish"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="top|end"
+                android:layout_margin="12dp"
+                android:background="@drawable/bg_pill_soft"
+                android:backgroundTint="#80FFFFFF"
+                android:padding="8dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_heart_outline"
+                app:tint="#555555" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="end"
-            android:paddingTop="6dp">
+            android:orientation="vertical"
+            android:padding="14dp">
 
-            <ImageButton
-                android:id="@+id/btn_wish"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@android:color/transparent"
-                android:contentDescription="wish"
-                android:src="@drawable/ic_heart_outline" />
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="상품명"
+                android:textColor="#111111"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/tv_category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="카테고리 정보"
+                android:textColor="#999999"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tv_price"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="48,000원"
+                android:textColor="#D080B6"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="10dp"/>
         </LinearLayout>
-
     </LinearLayout>
-
 </com.google.android.material.card.MaterialCardView>

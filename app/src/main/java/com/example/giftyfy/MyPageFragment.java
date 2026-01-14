@@ -2,10 +2,20 @@ package com.example.giftyfy;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.giftyfy.friend.Friend;
 import com.example.giftyfy.login.LoginActivity;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
@@ -29,6 +40,9 @@ public class MyPageFragment extends Fragment {
 
     private TextView tvMonthTitle;
     private TextView tvMyInterestsTitle;
+    private TextView tvBirthdayNoticeLabel; 
+    private TextView tvNoBirthdayFriend;    
+    private ChipGroup cgBirthdayFriends;
     private RecyclerView rvCalendar;
     private RecyclerView rvReceivedGifts;
     private RecyclerView rvWishlist;
@@ -36,7 +50,9 @@ public class MyPageFragment extends Fragment {
 
     private ChipGroup cgMyInterests;
     private Button btnAddInterest;
+    private TextView btnAddAnniversary;
     private Button btnLogout;
+    private View layoutEmptyWishlist; 
 
     private final String[] availableTags = {
             "디저트러버", "애주가", "상품권애호가", "카페돌이", "고기진심러",
@@ -49,10 +65,9 @@ public class MyPageFragment extends Fragment {
     private String myName = "";
     private String myBirthday = "";
     private List<String> myInterests = new ArrayList<>();
-    
     private List<Friend> realFriends = new ArrayList<>();
 
-    private ProductAdapter receivedAdapter;
+    private ReceivedGiftAdapter receivedAdapter; 
     private ProductAdapter wishAdapter;
 
     public MyPageFragment() {
@@ -67,11 +82,18 @@ public class MyPageFragment extends Fragment {
 
         tvMonthTitle = view.findViewById(R.id.tvMonthTitle);
         tvMyInterestsTitle = view.findViewById(R.id.tvMyInterestsTitle);
+
+        tvBirthdayNoticeLabel = view.findViewById(R.id.tvBirthdayNoticeLabel);
+        tvNoBirthdayFriend = view.findViewById(R.id.tvNoBirthdayFriend);
+        cgBirthdayFriends = view.findViewById(R.id.cgBirthdayFriends);
+        
         rvCalendar = view.findViewById(R.id.rvCalendar);
         rvReceivedGifts = view.findViewById(R.id.rvReceivedGifts);
         rvWishlist = view.findViewById(R.id.rvWishlist);
+        layoutEmptyWishlist = view.findViewById(R.id.layoutEmptyWishlist);
         cgMyInterests = view.findViewById(R.id.cgMyInterests);
         btnAddInterest = view.findViewById(R.id.btnAddInterest);
+        btnAddAnniversary = view.findViewById(R.id.btnAddAnniversary);
         btnLogout = view.findViewById(R.id.btnLogout);
 
         setupRecyclerViews();
@@ -79,7 +101,11 @@ public class MyPageFragment extends Fragment {
         loadRealFriendsFromServer();
         setupCalendarButtons(view);
 
-        btnAddInterest.setOnClickListener(v -> showTagSelectDialog());
+        btnAddInterest.setOnClickListener(v -> showTagSelectBottomSheet());
+        if (btnAddAnniversary != null) {
+            btnAddAnniversary.setOnClickListener(v -> showAddAnniversaryDialog());
+        }
+
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(getActivity(), LoginActivity.class);
@@ -89,8 +115,8 @@ public class MyPageFragment extends Fragment {
     }
 
     private void setupRecyclerViews() {
-        rvReceivedGifts.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        receivedAdapter = new ProductAdapter();
+        rvReceivedGifts.setLayoutManager(new LinearLayoutManager(getContext()));
+        receivedAdapter = new ReceivedGiftAdapter();
         rvReceivedGifts.setAdapter(receivedAdapter);
 
         rvWishlist.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
@@ -98,16 +124,52 @@ public class MyPageFragment extends Fragment {
         rvWishlist.setAdapter(wishAdapter);
     }
 
+    private void showAddAnniversaryDialog() {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_anniversary, null);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        dialogView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
+
+        Spinner spPerson = dialogView.findViewById(R.id.spPerson);
+        List<String> friendNames = new ArrayList<>();
+        friendNames.add("없음");
+        for (Friend f : realFriends) friendNames.add(f.getName());
+        spPerson.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, friendNames));
+
+        Spinner spMonth = dialogView.findViewById(R.id.spMonth);
+        Spinner spDay = dialogView.findViewById(R.id.spDay);
+        List<String> months = new ArrayList<>(); for (int i = 1; i <= 12; i++) months.add(String.valueOf(i));
+        spMonth.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, months));
+        List<String> days = new ArrayList<>(); for (int i = 1; i <= 31; i++) days.add(String.valueOf(i));
+        spDay.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, days));
+
+        dialogView.findViewById(R.id.btnAdd).setOnClickListener(v -> {
+            EditText etTitle = dialogView.findViewById(R.id.etAnniversaryTitle);
+            if (etTitle.getText().toString().isEmpty()) {
+                Toast.makeText(getContext(), "기념일 제목을 입력해주세요.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Toast.makeText(getContext(), "기념일이 추가되었습니다!", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
     private void loadMyProfileFromServer() {
         FirebaseManager.getInstance().listenToMyProfile(data -> {
-            if (data != null) {
+            if (data != null && isAdded()) {
                 myName = (String) data.get("name");
                 myBirthday = (String) data.get("birthday");
                 
                 if (myName != null && !myName.isEmpty()) {
                     tvMyInterestsTitle.setText(myName + "님의 취향 키워드");
-                } else {
-                    tvMyInterestsTitle.setText("나의 취향 키워드");
                 }
 
                 List<String> loadedInterests = (List<String>) data.get("interests");
@@ -116,43 +178,98 @@ public class MyPageFragment extends Fragment {
                     updateInterestsUI();
                 }
 
-                // 위시리스트 ID 목록 가져오기
                 List<String> wishIds = (List<String>) data.get("wishlist");
                 if (wishIds == null) wishIds = new ArrayList<>();
 
-                // ✅ 어댑터들에 위시리스트 상태 알려주기
-                if (receivedAdapter != null) receivedAdapter.setWishlistIds(wishIds);
                 if (wishAdapter != null) wishAdapter.setWishlistIds(wishIds);
 
-                // ✅ 받은 선물 목록 로드
-                List<String> receivedIds = (List<String>) data.get("receivedGifts");
-                if (receivedIds != null && !receivedIds.isEmpty()) {
-                    FirebaseManager.getInstance().getProductsByIds(receivedIds, products -> {
-                        receivedAdapter.setItems(products);
-                    });
+                if (wishIds.isEmpty()) {
+                    rvWishlist.setVisibility(View.GONE);
+                    if (layoutEmptyWishlist != null) layoutEmptyWishlist.setVisibility(View.VISIBLE);
                 } else {
-                    receivedAdapter.setItems(new ArrayList<>());
+                    rvWishlist.setVisibility(View.VISIBLE);
+                    if (layoutEmptyWishlist != null) layoutEmptyWishlist.setVisibility(View.GONE);
+                    FirebaseManager.getInstance().getProductsByIds(wishIds, products -> {
+                        if (isAdded()) wishAdapter.setItems(products);
+                    });
                 }
 
-                // ✅ 위시리스트 목록 로드
-                if (!wishIds.isEmpty()) {
-                    FirebaseManager.getInstance().getProductsByIds(wishIds, products -> {
-                        wishAdapter.setItems(products);
-                    });
-                } else {
-                    wishAdapter.setItems(new ArrayList<>());
+                List<String> receivedIds = (List<String>) data.get("receivedGifts");
+                if (receivedIds != null && !receivedIds.isEmpty()) {
+                    List<ReceivedGift> giftItems = new ArrayList<>();
+                    for (String id : receivedIds) {
+                        giftItems.add(new ReceivedGift(id, "민서", "2025.12.25"));
+                    }
+                    if (isAdded()) receivedAdapter.setItems(giftItems);
                 }
             }
         });
     }
 
     private void loadRealFriendsFromServer() {
-        FirebaseManager.getInstance().fetchAllUsersAsFriends(friends -> {
-            if (friends != null) {
-                this.realFriends = friends;
-                updateCalendar();
+        FirebaseManager.getInstance().fetchAllUsersAsFriends(new FirebaseManager.OnFriendsLoadedListener() {
+            @Override
+            public void onLoaded(List<Friend> friends) {
+                if (friends != null && isAdded()) {
+                    realFriends = friends;
+                    updateCalendar();
+                    updateBirthdayNotice(Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
+                }
             }
         });
+    }
+
+    private void updateBirthdayNotice(int day) {
+        if (cgBirthdayFriends == null || tvBirthdayNoticeLabel == null || tvNoBirthdayFriend == null) return;
+        cgBirthdayFriends.removeAllViews();
+
+        Calendar todayCal = Calendar.getInstance();
+        boolean isToday = (selectedDate.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
+                           selectedDate.get(Calendar.MONTH) == todayCal.get(Calendar.MONTH) &&
+                           day == todayCal.get(Calendar.DAY_OF_MONTH));
+
+        String datePrefix = isToday ? "오늘" : day + "일";
+
+        if (isToday) {
+            tvBirthdayNoticeLabel.setText("오늘 생일인 친구");
+        } else {
+            tvBirthdayNoticeLabel.setText(day + "일 생일인 친구");
+        }
+
+        tvNoBirthdayFriend.setText(datePrefix + " 생일인 친구가 없습니다!");
+
+        String mmdd = String.format(Locale.KOREA, "%02d-%02d", selectedDate.get(Calendar.MONTH) + 1, day);
+
+        boolean found = false;
+        for (Friend f : realFriends) {
+            if (f.getBirthday() != null && f.getBirthday().contains(mmdd)) {
+                addBirthdayFriendChip(f);
+                found = true;
+            }
+        }
+
+        if (found) {
+            tvBirthdayNoticeLabel.setVisibility(View.VISIBLE);
+            tvNoBirthdayFriend.setVisibility(View.GONE);
+        } else {
+            tvBirthdayNoticeLabel.setVisibility(View.GONE);
+            tvNoBirthdayFriend.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void addBirthdayFriendChip(Friend friend) {
+        Chip chip = new Chip(getContext());
+        chip.setText(friend.getName());
+        chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FBF7F9")));
+        chip.setTextColor(ColorStateList.valueOf(Color.BLACK));
+        chip.setChipStrokeWidth(0f);
+        chip.setChipCornerRadius(999f);
+        chip.setOnClickListener(v -> {
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).onFriendGiftClick(friend.getId(), friend.getName());
+            }
+        });
+        cgBirthdayFriends.addView(chip);
     }
 
     private void updateInterestsUI() {
@@ -164,11 +281,15 @@ public class MyPageFragment extends Fragment {
 
     private void addTagChipToUI(String tag) {
         Chip chip = new Chip(getContext());
-        chip.setText("#" + tag);
+        chip.setText("#" + tag); 
         chip.setCloseIconVisible(true);
-        chip.setChipBackgroundColorResource(android.R.color.white);
-        chip.setChipStrokeColorResource(R.color.black);
-        chip.setChipStrokeWidth(1f);
+        chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#D080B6"))); 
+        chip.setTextColor(ColorStateList.valueOf(Color.WHITE));
+        chip.setCloseIconTint(ColorStateList.valueOf(Color.WHITE));
+        
+        chip.setChipStrokeWidth(0f);
+        chip.setChipCornerRadius(999f);
+
         chip.setOnCloseIconClickListener(v -> {
             myInterests.remove(tag);
             saveProfileToServer();
@@ -177,18 +298,59 @@ public class MyPageFragment extends Fragment {
         cgMyInterests.addView(chip);
     }
 
-    private void showTagSelectDialog() {
-        new AlertDialog.Builder(getContext())
-                .setTitle("나의 취향 키워드 선택")
-                .setItems(availableTags, (dialog, which) -> {
-                    String selectedTag = availableTags[which];
-                    if (!myInterests.contains(selectedTag)) {
-                        myInterests.add(selectedTag);
-                        saveProfileToServer();
-                        addTagChipToUI(selectedTag);
-                    }
-                })
-                .show();
+    private void showTagSelectBottomSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.bottom_sheet_tag_selector, null);
+        dialog.setContentView(view);
+
+        View btnClose = view.findViewById(R.id.btnClose);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        ChipGroup cg = view.findViewById(R.id.cgAvailableTags);
+        List<String> tempSelected = new ArrayList<>(myInterests);
+
+        for (String tag : availableTags) {
+            Chip chip = new Chip(getContext());
+            chip.setText(tag); 
+            chip.setCheckable(true);
+            chip.setChecked(tempSelected.contains(tag));
+            
+            updateSelectableChipStyle(chip, chip.isChecked());
+
+            chip.setOnCheckedChangeListener((v, isChecked) -> {
+                if (isChecked) {
+                    if (!tempSelected.contains(tag)) tempSelected.add(tag);
+                } else {
+                    tempSelected.remove(tag);
+                }
+                updateSelectableChipStyle(chip, isChecked);
+            });
+            cg.addView(chip);
+        }
+
+        view.findViewById(R.id.btnDone).setOnClickListener(v -> {
+            myInterests = new ArrayList<>(tempSelected);
+            saveProfileToServer();
+            updateInterestsUI();
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void updateSelectableChipStyle(Chip chip, boolean isChecked) {
+        if (isChecked) {
+            chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#D080B6")));
+            chip.setTextColor(Color.WHITE);
+            chip.setChipStrokeWidth(0f);
+        } else {
+            chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FBF7F9")));
+            chip.setTextColor(Color.parseColor("#333333"));
+            chip.setChipStrokeColor(ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
+            chip.setChipStrokeWidth(1f * getResources().getDisplayMetrics().density);
+        }
     }
 
     private void saveProfileToServer() {
@@ -214,7 +376,10 @@ public class MyPageFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy년 MM월", Locale.KOREA);
         tvMonthTitle.setText(sdf.format(selectedDate.getTime()));
         List<String> daysInMonth = generateDaysInMonth(selectedDate);
-        CalendarAdapter adapter = new CalendarAdapter(daysInMonth, realFriends, (Calendar) selectedDate.clone());
+        
+        CalendarAdapter adapter = new CalendarAdapter(daysInMonth, realFriends, (Calendar) selectedDate.clone(), (day, birthdayNames) -> {
+            updateBirthdayNotice(day);
+        });
         rvCalendar.setAdapter(adapter);
     }
 

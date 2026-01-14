@@ -4,176 +4,334 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="@color/bg"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingBottom="80dp">
 
-        <!-- 1. 내 취향 태그 섹션 -->
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"
+            android:text="My Page"
+            android:textColor="#111111"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <!-- ✅ Title 밑 구분선 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginBottom="24dp"
+            android:background="#E0E0E0" />
+
+        <!-- 1. 나의 취향 키워드 -->
         <TextView
             android:id="@+id/tvMyInterestsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginBottom="12dp"
             android:text="나의 취향 키워드"
-            android:textColor="#333333"
+            android:textColor="#111111"
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/cgMyInterests"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:chipSpacingHorizontal="8dp">
-        </com.google.android.material.chip.ChipGroup>
-
-        <Button
-            android:id="@+id/btnAddInterest"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:backgroundTint="#ECEBFF"
-            android:text="+ 태그 추가하기"
-            android:textColor="#9A97F3"
-            android:textSize="12sp"
-            style="@style/Widget.MaterialComponents.Button.TextButton" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="24dp"
-            android:background="#E5E5EC" />
-
-        <!-- 2. 친구 생일 캘린더 섹션 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="32dp"
+            android:background="@drawable/bg_card"
+            android:padding="20dp"
+            android:orientation="vertical">
 
-            <TextView
-                android:layout_width="0dp"
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cgMyInterests"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="생일 캘린더"
-                android:textColor="#333333"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp" />
 
-            <ImageButton
-                android:id="@+id/btnPrevMonth"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_media_previous"
-                app:tint="#9A97F3" />
-
-            <TextView
-                android:id="@+id/tvMonthTitle"
+            <Button
+                android:id="@+id/btnAddInterest"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="12dp"
-                android:text="2023년 10월"
-                android:textColor="#333333"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <ImageButton
-                android:id="@+id/btnNextMonth"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_media_next"
-                app:tint="#9A97F3" />
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/brand_tint"
+                android:text="+ 태그 추가하기"
+                android:textColor="@color/brand"
+                android:textStyle="bold"
+                style="@style/Widget.MaterialComponents.Button.TextButton" />
         </LinearLayout>
 
+        <!-- 2. 위시리스트 -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="16dp">
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="일" android:gravity="center" android:textColor="#FF0000" android:textStyle="bold" />
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="월" android:gravity="center" android:textStyle="bold" />
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="화" android:gravity="center" android:textStyle="bold" />
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="수" android:gravity="center" android:textStyle="bold" />
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="목" android:gravity="center" android:textStyle="bold" />
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="금" android:gravity="center" android:textStyle="bold" />
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="토" android:gravity="center" android:textColor="#0000FF" android:textStyle="bold" />
+            android:layout_marginStart="24dp"
+            android:layout_marginBottom="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_heart_filled"
+                app:tint="@color/brand" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="위시리스트"
+                android:textColor="#111111"
+                android:textSize="18sp"
+                android:textStyle="bold" />
         </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvCalendar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            app:spanCount="7"
-            tools:listitem="@layout/item_calendar_day" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="24dp"
-            android:background="#E5E5EC" />
-
-        <!-- 3. 내가 받은 선물 섹션 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="내가 받은 선물"
-            android:textColor="#333333"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvReceivedGifts"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:clipToPadding="false"
-            android:orientation="horizontal"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/item_product" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="24dp"
-            android:background="#E5E5EC" />
-
-        <!-- 4. 위시리스트 섹션 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="나의 위시리스트"
-            android:textColor="#333333"
-            android:textSize="18sp"
-            android:textStyle="bold" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvWishlist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginBottom="32dp"
             android:clipToPadding="false"
+            android:paddingHorizontal="16dp"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_product"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/layoutEmptyWishlist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="32dp"
+            android:background="@drawable/bg_card"
+            android:padding="40dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/ivEmptyWish"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:src="@drawable/ic_heart_outline"
+                app:tint="#DDDDDD" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="위시리스트가 비어있습니다"
+                android:textColor="#333333"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="선물 탭에서 마음에 드는 상품을 추가해보세요"
+                android:textColor="#999999"
+                android:textSize="13sp"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- 3. 캘린더 -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:text="캘린더"
+                android:textColor="#111111"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnAddAnniversary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="+ 기념일 추가"
+                android:textColor="@color/brand"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:padding="4dp" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="32dp"
+            android:background="@drawable/bg_card"
+            android:padding="20dp"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <ImageButton
+                    android:id="@+id/btnPrevMonth"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_arrow_left"
+                    app:tint="@color/text_secondary" />
+
+                <TextView
+                    android:id="@+id/tvMonthTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:text="2026년 1월"
+                    android:textColor="#111111"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/btnNextMonth"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/text_secondary" />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="일" android:gravity="center" android:textColor="#FF4D4D" android:textSize="12sp" android:textStyle="bold" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="월" android:gravity="center" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="화" android:gravity="center" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="수" android:gravity="center" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="목" android:gravity="center" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="금" android:gravity="center" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="토" android:gravity="center" android:textColor="#4D79FF" android:textSize="12sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvCalendar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                app:spanCount="7"
+                tools:listitem="@layout/item_calendar_day" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#F0F0F0"
+                android:layout_marginVertical="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvBirthdayNoticeLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="오늘 생일인 친구"
+                    android:textColor="#999999"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/cgBirthdayFriends"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:chipSpacingHorizontal="8dp" />
+
+                <TextView
+                    android:id="@+id/tvNoBirthdayFriend"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="오늘 생일인 친구가 없습니다!"
+                    android:textColor="#999999"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 4. 받은 선물 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginBottom="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_gift"
+                app:tint="@color/brand" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="받은 선물"
+                android:textColor="#111111"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvReceivedGifts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:clipToPadding="false"
+            android:paddingHorizontal="16dp"
             android:orientation="horizontal"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_product" />
 
-        <!-- 5. 로그아웃 버튼 -->
+        <!-- Logout -->
         <Button
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:layout_marginBottom="20dp"
-            android:backgroundTint="#F8F8FA"
+            android:layout_height="56dp"
+            android:layout_marginHorizontal="16dp"
+            android:backgroundTint="#F0F0F0"
             android:text="로그아웃"
-            android:textColor="#767676"
-            style="@style/Widget.MaterialComponents.Button.UnelevatedButton" />
-
+            android:textColor="#999999"
+            android:textStyle="bold"
+            app:cornerRadius="16dp"/>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

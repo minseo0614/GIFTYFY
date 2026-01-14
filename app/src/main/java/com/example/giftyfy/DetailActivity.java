@@ -1,6 +1,7 @@
 package com.example.giftyfy;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,7 +33,7 @@ public class DetailActivity extends AppCompatActivity {
 
     private boolean isLiked = false;
     private String productId;
-    private String targetFriendUid; // ✅ 추가
+    private String targetFriendUid; 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +57,7 @@ public class DetailActivity extends AppCompatActivity {
         btnLike = findViewById(R.id.btn_like);
 
         productId = getIntent().getStringExtra("productId");
-        targetFriendUid = getIntent().getStringExtra("targetFriendUid"); // ✅ 추가
+        targetFriendUid = getIntent().getStringExtra("targetFriendUid"); 
 
         if (productId == null || productId.isEmpty()) {
             finish();
@@ -95,10 +96,10 @@ public class DetailActivity extends AppCompatActivity {
                 List<String> wishlist = (List<String>) data.get("wishlist");
                 if (wishlist != null && wishlist.contains(productId)) {
                     isLiked = true;
-                    btnLike.setImageResource(R.drawable.ic_heart_filled);
+                    updateLikeIcon(true);
                 } else {
                     isLiked = false;
-                    btnLike.setImageResource(R.drawable.ic_heart_outline);
+                    updateLikeIcon(false);
                 }
             }
         });
@@ -106,10 +107,20 @@ public class DetailActivity extends AppCompatActivity {
 
     private void toggleLike() {
         isLiked = !isLiked;
-        btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        updateLikeIcon(isLiked);
         FirebaseManager.getInstance().toggleWishlist(productId, isLiked);
         String msg = isLiked ? "위시리스트에 추가되었습니다." : "위시리스트에서 제거되었습니다.";
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateLikeIcon(boolean liked) {
+        if (btnLike == null) return;
+        btnLike.setImageResource(liked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        if (liked) {
+            btnLike.setColorFilter(Color.parseColor("#D080B6"));
+        } else {
+            btnLike.setColorFilter(Color.parseColor("#555555"));
+        }
     }
 
     private void updateUI(Product p) {
@@ -122,13 +133,11 @@ public class DetailActivity extends AppCompatActivity {
 
         if (btnGift != null) {
             btnGift.setOnClickListener(v -> {
-                // ✅ 1. DB 추가 로직 (친구가 지정된 경우)
                 if (targetFriendUid != null && !targetFriendUid.isEmpty()) {
                     FirebaseManager.getInstance().addReceivedGiftToUser(targetFriendUid, productId);
                     Toast.makeText(this, "친구의 선물 목록에 추가되었습니다!", Toast.LENGTH_SHORT).show();
                 }
 
-                // ✅ 2. 쇼핑몰 이동 로직
                 String rawUrl = p.getProductUrl();
                 if (rawUrl != null && !rawUrl.isEmpty()) {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(rawUrl));

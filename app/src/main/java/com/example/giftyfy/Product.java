@@ -24,7 +24,7 @@ public class Product {
     @Exclude
     private boolean wish = false;
     
-    private Map<String, Integer> relationScores = new HashMap<>(); // 기존 Integer 유지
+    private Map<String, Integer> relationScores = new HashMap<>();
 
     public Product() {}
 

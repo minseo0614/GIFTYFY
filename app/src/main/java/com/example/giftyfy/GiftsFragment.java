@@ -1,8 +1,11 @@
 package com.example.giftyfy;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,7 +32,9 @@ public class GiftsFragment extends Fragment {
     private RecyclerView recyclerView;
     private ProductAdapter adapter;
     private TextView tvGiftHeader;
+    private EditText etSearch;
 
+    private final List<Product> allProductsList = new ArrayList<>();
     private final List<String> friendInterests = new ArrayList<>();
 
     public GiftsFragment() {
@@ -44,21 +49,12 @@ public class GiftsFragment extends Fragment {
         return f;
     }
 
-    public static GiftsFragment newFromFriend(String friendUid, String friendName) {
-        GiftsFragment f = new GiftsFragment();
-        Bundle b = new Bundle();
-        b.putBoolean(ARG_FROM_FRIEND, true);
-        b.putString(ARG_FRIEND_UID, friendUid);
-        b.putString(ARG_FRIEND_NAME, friendName);
-        f.setArguments(b);
-        return f;
-    }
-
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         tvGiftHeader = view.findViewById(R.id.tvGiftHeader);
+        etSearch = view.findViewById(R.id.etSearch);
 
         recyclerView = view.findViewById(R.id.rv_products);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
@@ -72,7 +68,6 @@ public class GiftsFragment extends Fragment {
             friendName = getArguments().getString(ARG_FRIEND_NAME, "");
         }
 
-        // ✅ 내 위시리스트 실시간 리스닝 추가
         loadMyWishlist();
 
         if (!fromFriend) {
@@ -83,15 +78,33 @@ public class GiftsFragment extends Fragment {
             tvGiftHeader.setText(friendName + " 추천 선물");
             loadTop6ForFriend();
         }
+
+        if (etSearch != null) {
+            etSearch.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    filterProducts(s.toString());
+                }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        }
+    }
+
+    private void filterProducts(String query) {
+        List<Product> filtered = new ArrayList<>();
+        for (Product p : allProductsList) {
+            if (p.getTitle() != null && p.getTitle().toLowerCase().contains(query.toLowerCase())) {
+                filtered.add(p);
+            }
+        }
+        adapter.setItems(filtered);
     }
 
     private void loadMyWishlist() {
         FirebaseManager.getInstance().listenToMyProfile(data -> {
-            if (data != null) {
+            if (data != null && isAdded()) {
                 List<String> wishlist = (List<String>) data.get("wishlist");
-                if (adapter != null) {
-                    adapter.setWishlistIds(wishlist);
-                }
+                if (adapter != null) adapter.setWishlistIds(wishlist);
             }
         });
     }
@@ -100,7 +113,10 @@ public class GiftsFragment extends Fragment {
         FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
             @Override
             public void onLoaded(List<Product> products) {
-                adapter.setItems(products);
+                if (!isAdded()) return;
+                allProductsList.clear();
+                if (products != null) allProductsList.addAll(products);
+                adapter.setItems(allProductsList);
             }
 
             @Override
@@ -129,7 +145,11 @@ public class GiftsFragment extends Fragment {
                         FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
                             @Override
                             public void onLoaded(List<Product> products) {
-                                List<Product> top6 = Recommender.topN(products, relation, friendInterests, 6);
+                                if (!isAdded()) return;
+                                allProductsList.clear();
+                                if (products != null) allProductsList.addAll(products);
+                                
+                                List<Product> top6 = Recommender.topN(allProductsList, relation, friendInterests, 6);
                                 adapter.setItems(top6);
                             }
 

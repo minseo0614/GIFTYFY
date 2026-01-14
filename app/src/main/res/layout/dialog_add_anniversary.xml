@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="24dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="#FFFFFF">
+
+        <!-- Header -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:text="기념일 추가"
+                android:textColor="#111111"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/btnClose"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:alpha="0.4"
+                android:padding="4dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="#111111" />
+        </RelativeLayout>
+
+        <!-- 제목 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="기념일 제목"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
+
+        <EditText
+            android:id="@+id/etAnniversaryTitle"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_search"
+            android:backgroundTint="#FBF7F9"
+            android:hint="예: 여행 기념일, 커플 기념일"
+            android:paddingHorizontal="16dp"
+            android:textSize="15sp"
+            android:textColor="#333333"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- ✅ 관련 인물 선택 추가 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="관련 인물"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
+
+        <Spinner
+            android:id="@+id/spPerson"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_search"
+            android:backgroundTint="#FBF7F9"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- 날짜 선택 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="날짜 선택"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp">
+
+            <Spinner
+                android:id="@+id/spMonth"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_search"
+                android:backgroundTint="#FBF7F9" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="월"
+                android:layout_gravity="center_vertical"
+                android:layout_marginHorizontal="8dp"
+                android:textColor="#333333"/>
+
+            <Spinner
+                android:id="@+id/spDay"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_search"
+                android:backgroundTint="#FBF7F9" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="일"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp"
+                android:textColor="#333333"/>
+        </LinearLayout>
+
+        <!-- 반복 설정 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="반복 설정"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleRepeat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            app:checkedButton="@+id/btnRepeatYear"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRepeatYear"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:text="매년 반복"
+                app:cornerRadius="26dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOnce"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:text="한 번만"
+                app:cornerRadius="26dp" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <!-- 메모 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="메모 (선택)"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
+
+        <EditText
+            android:id="@+id/etMemo"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:background="@drawable/bg_search"
+            android:backgroundTint="#FBF7F9"
+            android:gravity="top"
+            android:hint="메모를 입력하세요..."
+            android:padding="16dp"
+            android:textSize="15sp"
+            android:textColor="#333333"
+            android:layout_marginBottom="24dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAdd"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:backgroundTint="#D080B6"
+            android:text="추가하기"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="16dp" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

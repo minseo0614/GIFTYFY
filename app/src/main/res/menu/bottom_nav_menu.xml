@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/nav_friends" android:title="친구"/>
-    <item android:id="@+id/nav_gifts" android:title="선물"/>
-    <item android:id="@+id/nav_mypage" android:title="마이"/>
+    <item
+        android:id="@+id/nav_friends"
+        android:icon="@android:drawable/ic_menu_my_calendar"
+        android:title="Friends" />
+    <item
+        android:id="@+id/nav_gifts"
+        android:icon="@android:drawable/ic_menu_set_as"
+        android:title="Gifts" />
+    <item
+        android:id="@+id/nav_mypage"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="My Page" />
 </menu>
