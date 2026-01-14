@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -31,18 +32,21 @@ import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MyPageFragment extends Fragment {
 
     private TextView tvMonthTitle;
     private TextView tvMyInterestsTitle;
-    private TextView tvBirthdayNoticeLabel; 
     private TextView tvNoBirthdayFriend;    
     private ChipGroup cgBirthdayFriends;
     private RecyclerView rvCalendar;
@@ -68,7 +72,7 @@ public class MyPageFragment extends Fragment {
     private String myBirthday = "";
     private List<String> myInterests = new ArrayList<>();
     private List<Friend> realFriends = new ArrayList<>();
-    private List<Anniversary> anniversaries = new ArrayList<>();
+    private List<Anniversary> realAnniversaries = new ArrayList<>();
 
     private ReceivedGiftAdapter receivedAdapter; 
     private ProductAdapter wishAdapter;
@@ -85,8 +89,8 @@ public class MyPageFragment extends Fragment {
 
         tvMonthTitle = view.findViewById(R.id.tvMonthTitle);
         tvMyInterestsTitle = view.findViewById(R.id.tvMyInterestsTitle);
-
-        tvBirthdayNoticeLabel = view.findViewById(R.id.tvBirthdayNoticeLabel);
+        
+        // [해결] tvBirthdayNoticeLabel 관련 코드 삭제 (XML에서 제거됨)
         tvNoBirthdayFriend = view.findViewById(R.id.tvNoBirthdayFriend);
         cgBirthdayFriends = view.findViewById(R.id.cgBirthdayFriends);
         
@@ -125,6 +129,7 @@ public class MyPageFragment extends Fragment {
 
         rvWishlist.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         wishAdapter = new ProductAdapter();
+        wishAdapter.setUseMiniLayout(true); 
         rvWishlist.setAdapter(wishAdapter);
     }
 
@@ -153,37 +158,59 @@ public class MyPageFragment extends Fragment {
         List<String> days = new ArrayList<>(); for (int i = 1; i <= 31; i++) days.add(String.valueOf(i));
         spDay.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, days));
 
+        MaterialButtonToggleGroup toggleRepeat = dialogView.findViewById(R.id.toggleRepeat);
+
         dialogView.findViewById(R.id.btnAdd).setOnClickListener(v -> {
-            EditText etTitle = dialogView.findViewById(R.id.etAnniversaryTitle);
-            EditText etMemo = dialogView.findViewById(R.id.etMemo);
-            MaterialButtonToggleGroup toggleRepeat = dialogView.findViewById(R.id.toggleRepeat);
-            
-            String title = etTitle.getText().toString().trim();
+            String title = ((EditText)dialogView.findViewById(R.id.etAnniversaryTitle)).getText().toString().trim();
+            String memo = ((EditText)dialogView.findViewById(R.id.etMemo)).getText().toString().trim();
+            int month = Integer.parseInt(spMonth.getSelectedItem().toString());
+            int day = Integer.parseInt(spDay.getSelectedItem().toString());
+            String person = spPerson.getSelectedItem().toString();
+            boolean isRepeat = toggleRepeat.getCheckedButtonId() == R.id.btnRepeatYear;
+
             if (title.isEmpty()) {
-                Toast.makeText(getContext(), "기념일 제목을 입력해주세요.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "제목을 입력해주세요.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            int month = Integer.parseInt(spMonth.getSelectedItem().toString());
-            int day = Integer.parseInt(spDay.getSelectedItem().toString());
-            String personName = spPerson.getSelectedItem().toString();
-            String personUid = "";
-            for (Friend f : realFriends) {
-                if (f.getName().equals(personName)) {
-                    personUid = f.getId();
-                    break;
-                }
-            }
-            String memo = etMemo.getText().toString();
-            boolean isRepeat = (toggleRepeat.getCheckedButtonId() == R.id.btnRepeatYear);
+            String myUid = FirebaseAuth.getInstance().getUid();
+            if (myUid == null) return;
 
-            FirebaseManager.getInstance().addAnniversary(title, month, day, personUid, memo, isRepeat);
-            
-            Toast.makeText(getContext(), "기념일이 추가되었습니다!", Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
+            Map<String, Object> data = new HashMap<>();
+            data.put("title", title);
+            data.put("month", month);
+            data.put("day", day);
+            data.put("personName", person);
+            data.put("isRepeat", isRepeat);
+            data.put("memo", memo);
+
+            FirebaseFirestore.getInstance().collection("users").document(myUid)
+                    .collection("anniversaries").add(data)
+                    .addOnSuccessListener(ref -> {
+                        Toast.makeText(getContext(), "기념일이 추가되었습니다.", Toast.LENGTH_SHORT).show();
+                        loadAnniversariesFromServer();
+                        dialog.dismiss();
+                    });
         });
 
         dialog.show();
+    }
+
+    private void loadAnniversariesFromServer() {
+        String myUid = FirebaseAuth.getInstance().getUid();
+        if (myUid == null) return;
+
+        FirebaseFirestore.getInstance().collection("users").document(myUid)
+                .collection("anniversaries").get()
+                .addOnSuccessListener(qs -> {
+                    realAnniversaries.clear();
+                    for (QueryDocumentSnapshot doc : qs) {
+                        Anniversary a = doc.toObject(Anniversary.class);
+                        realAnniversaries.add(a);
+                    }
+                    updateCalendar();
+                    updateBirthdayNotice(selectedDate.get(Calendar.DAY_OF_MONTH));
+                });
     }
 
     private void loadMyProfileFromServer() {
@@ -243,36 +270,13 @@ public class MyPageFragment extends Fragment {
         });
     }
 
-    private void loadAnniversariesFromServer() {
-        FirebaseManager.getInstance().listenToAnniversaries(list -> {
-            if (list != null && isAdded()) {
-                this.anniversaries = list;
-                updateCalendar();
-                // 현재 선택된 날짜의 공지 갱신
-                // 일단 오늘 날짜 기준으로 초기화
-                updateBirthdayNotice(Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
-            }
-        });
-    }
-
     private void updateBirthdayNotice(int day) {
-        if (cgBirthdayFriends == null || tvBirthdayNoticeLabel == null || tvNoBirthdayFriend == null) return;
+        if (cgBirthdayFriends == null || tvNoBirthdayFriend == null) return;
         cgBirthdayFriends.removeAllViews();
 
-        Calendar todayCal = Calendar.getInstance();
-        boolean isToday = (selectedDate.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
-                           selectedDate.get(Calendar.MONTH) == todayCal.get(Calendar.MONTH) &&
-                           day == todayCal.get(Calendar.DAY_OF_MONTH));
-
-        String datePrefix = isToday ? "오늘" : day + "일";
-        tvBirthdayNoticeLabel.setText(datePrefix + "의 일정");
-
-        int month = selectedDate.get(Calendar.MONTH) + 1;
-        String mmdd = String.format(Locale.KOREA, "%02d-%02d", month, day);
-
+        String mmdd = String.format(Locale.KOREA, "%02d-%02d", selectedDate.get(Calendar.MONTH) + 1, day);
         boolean found = false;
 
-        // 1. 생일인 친구 체크
         for (Friend f : realFriends) {
             if (f.getBirthday() != null && f.getBirthday().contains(mmdd)) {
                 addBirthdayFriendChip(f);
@@ -280,36 +284,29 @@ public class MyPageFragment extends Fragment {
             }
         }
 
-        // 2. ✅ 기념일 체크 및 추가
-        for (Anniversary a : anniversaries) {
-            if (a.getMonth() == month && a.getDay() == day) {
-                String personName = "";
-                if (a.getPersonUid() != null && !a.getPersonUid().isEmpty()) {
-                    for (Friend f : realFriends) {
-                        if (f.getId().equals(a.getPersonUid())) {
-                            personName = " (with " + f.getName() + ")";
-                            break;
-                        }
-                    }
-                }
-                addAnniversaryEventChip(a.getTitle() + personName);
+        for (Anniversary a : realAnniversaries) {
+            if (a.getMonth() == (selectedDate.get(Calendar.MONTH) + 1) && a.getDay() == day) {
+                addAnniversaryChip(a);
                 found = true;
             }
         }
 
         if (found) {
-            tvBirthdayNoticeLabel.setVisibility(View.VISIBLE);
             tvNoBirthdayFriend.setVisibility(View.GONE);
         } else {
-            tvBirthdayNoticeLabel.setVisibility(View.VISIBLE); // 일정을 항상 보여주거나, 없으면 숨김
-            tvNoBirthdayFriend.setText(datePrefix + " 일정이 없습니다!");
+            Calendar todayCal = Calendar.getInstance();
+            boolean isToday = (selectedDate.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
+                               selectedDate.get(Calendar.MONTH) == todayCal.get(Calendar.MONTH) &&
+                               day == todayCal.get(Calendar.DAY_OF_MONTH));
+            String datePrefix = isToday ? "오늘" : day + "일";
+            tvNoBirthdayFriend.setText(datePrefix + " 일정이 없습니다");
             tvNoBirthdayFriend.setVisibility(View.VISIBLE);
         }
     }
 
     private void addBirthdayFriendChip(Friend friend) {
         Chip chip = new Chip(getContext());
-        chip.setText("🎂 " + friend.getName() + " 생일");
+        chip.setText(friend.getName() + " 생일");
         chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FBF7F9")));
         chip.setTextColor(ColorStateList.valueOf(Color.BLACK));
         chip.setChipStrokeWidth(0f);
@@ -322,12 +319,11 @@ public class MyPageFragment extends Fragment {
         cgBirthdayFriends.addView(chip);
     }
 
-    // ✅ 기념일 전용 칩 추가 메서드
-    private void addAnniversaryEventChip(String text) {
+    private void addAnniversaryChip(Anniversary anniversary) {
         Chip chip = new Chip(getContext());
-        chip.setText("📅 " + text);
-        chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#ECEBFF"))); // 연보라색
-        chip.setTextColor(ColorStateList.valueOf(Color.parseColor("#9A97F3")));
+        chip.setText(anniversary.getTitle());
+        chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#80B6D0")));
+        chip.setTextColor(ColorStateList.valueOf(Color.WHITE));
         chip.setChipStrokeWidth(0f);
         chip.setChipCornerRadius(999f);
         cgBirthdayFriends.addView(chip);
@@ -418,8 +414,7 @@ public class MyPageFragment extends Fragment {
         if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
         String email = FirebaseAuth.getInstance().getCurrentUser().getEmail();
         if (email == null) return;
-        String userId = email.split("@")[0];
-        FirebaseManager.getInstance().saveMyProfile(userId, myName, myBirthday, myInterests);
+        FirebaseManager.getInstance().saveMyProfile(email, myName, myBirthday, myInterests);
     }
 
     private void setupCalendarButtons(View view) {
@@ -438,7 +433,7 @@ public class MyPageFragment extends Fragment {
         tvMonthTitle.setText(sdf.format(selectedDate.getTime()));
         List<String> daysInMonth = generateDaysInMonth(selectedDate);
         
-        CalendarAdapter adapter = new CalendarAdapter(daysInMonth, realFriends, anniversaries, (Calendar) selectedDate.clone(), (day, eventNames) -> {
+        CalendarAdapter adapter = new CalendarAdapter(daysInMonth, realFriends, realAnniversaries, (Calendar) selectedDate.clone(), (day, birthdayNames) -> {
             updateBirthdayNotice(day);
         });
         rvCalendar.setAdapter(adapter);

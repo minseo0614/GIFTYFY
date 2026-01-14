@@ -38,9 +38,8 @@ public class ReceivedGiftAdapter extends RecyclerView.Adapter<ReceivedGiftAdapte
         ReceivedGift rg = items.get(position);
 
         h.tvSender.setText("From " + rg.getSenderName());
-        h.tvDate.setText(rg.getDate());
-
-        // 상품 정보는 ID로 실시간 로드
+        
+        // 상품 정보 로드
         FirebaseFirestore.getInstance().collection("products").document(rg.getProductId()).get()
                 .addOnSuccessListener(pdoc -> {
                     if (pdoc.exists()) {
@@ -58,14 +57,13 @@ public class ReceivedGiftAdapter extends RecyclerView.Adapter<ReceivedGiftAdapte
 
     static class VH extends RecyclerView.ViewHolder {
         ImageView ivProduct;
-        TextView tvTitle, tvSender, tvDate;
+        TextView tvTitle, tvSender;
 
         VH(@NonNull View itemView) {
             super(itemView);
             ivProduct = itemView.findViewById(R.id.ivProduct);
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvSender = itemView.findViewById(R.id.tvSender);
-            tvDate = itemView.findViewById(R.id.tvDate);
         }
     }
 }

@@ -14,25 +14,25 @@
         android:roundIcon="@mipmap/giftyfy_launcher_icon_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GIFTYFY"
-        android:usesCleartextTraffic="true"> <!-- ✅ HTTP 리다이렉션 허용을 위해 추가 -->
+        android:usesCleartextTraffic="true"> 
 
-        <!-- ✅ 앱 첫 화면 : 로그인 -->
+        <!-- 앱 첫 화면 : 로그인 -->
         <activity
             android:name=".login.LoginActivity"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
 
-        <!-- ✅ 회원가입 화면 -->
+        <!-- 회원가입 화면 -->
         <activity android:name=".login.SignUpActivity" />
 
         <!-- 메인 화면 -->
-        <activity android:name=".MainActivity" />
+        <activity
+            android:name=".MainActivity"
+            android:windowSoftInputMode="adjustPan" />
 
         <!-- 상품 상세 화면 -->
         <activity android:name=".DetailActivity" />

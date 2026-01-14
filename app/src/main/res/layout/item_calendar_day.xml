@@ -6,7 +6,7 @@
     android:clipChildren="false"
     android:clipToPadding="false">
 
-    <!-- 오늘 날짜 강조용 연핑크 배경 -->
+    <!-- 오늘 날짜 강조 -->
     <View
         android:id="@+id/viewTodayBg"
         android:layout_width="40dp"
@@ -40,7 +40,7 @@
                 android:textStyle="bold"
                 android:padding="2dp" />
 
-            <!-- ✅ 우상단 핑크 점: 위치를 조금 더 안쪽으로 조정하고 클리핑 방지 -->
+            <!-- 우상단 핑크 점 -->
             <View
                 android:id="@+id/viewDot"
                 android:layout_width="6dp"
@@ -54,7 +54,7 @@
                 android:visibility="gone" />
         </RelativeLayout>
 
-        <!-- 텍스트 정보는 숨김 (점과 하단 리스트로 대체) -->
+        <!-- 텍스트 정보는 숨김 -->
         <TextView
             android:id="@+id/tvBirthdayName"
             android:layout_width="wrap_content"

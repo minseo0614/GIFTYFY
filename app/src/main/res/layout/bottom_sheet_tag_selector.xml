@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:padding="24dp">
 
-    <!-- Header with Title and Close Button -->
+    <!-- 고정된 헤더 -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -35,20 +35,30 @@
             android:contentDescription="close" />
     </RelativeLayout>
 
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/cgAvailableTags"
+    <!-- 스크롤 가능한 키워드 영역 -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:chipSpacingHorizontal="8dp"
-        app:chipSpacingVertical="8dp">
-        <!-- Chips will be added dynamically -->
-    </com.google.android.material.chip.ChipGroup>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:minHeight="200dp"
+        android:maxHeight="400dp">
 
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/cgAvailableTags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="8dp">
+            <!-- Chips will be added dynamically -->
+        </com.google.android.material.chip.ChipGroup>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- 고정된 푸터 -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnDone"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:backgroundTint="#D080B6"
         android:text="선택 완료"
         android:textColor="#FFFFFF"

@@ -46,7 +46,6 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.VH> {
 
         h.tvName.setText(f.getName());
 
-        // 생일에서 년도 제거 (MM-dd 형식만 표시)
         String rawBirthday = f.getBirthday();
         if (rawBirthday != null && rawBirthday.contains("-")) {
             String[] parts = rawBirthday.split("-");
@@ -76,15 +75,19 @@ public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.VH> {
             }
         }
 
+        // ✅ [해결] 프로필 사진을 ic_person 기본 아이콘으로 통일
         if (h.ivProfile != null) {
             if (f.getProfileUrl() != null && !f.getProfileUrl().isEmpty()) {
                 Glide.with(h.itemView.getContext())
                         .load(f.getProfileUrl())
                         .circleCrop()
-                        .placeholder(R.drawable.ic_launcher_foreground)
+                        .placeholder(R.drawable.ic_person)
                         .into(h.ivProfile);
             } else {
-                h.ivProfile.setImageResource(R.drawable.ic_launcher_foreground);
+                // ✅ 프로필이 없으면 ic_person 표시 + 부드러운 배경
+                h.ivProfile.setImageResource(R.drawable.ic_person); 
+                h.ivProfile.setBackgroundResource(R.drawable.bg_pill_soft);
+                h.ivProfile.setPadding(10, 10, 10, 10);
             }
         }
 

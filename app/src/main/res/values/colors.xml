@@ -8,7 +8,7 @@
     <color name="brand_soft">#FBF7F9</color>
     <color name="brand_tint">#FBF7F9</color>
 
-    <!-- Surfaces & Backgrounds (탭들 배경 연핑크로 통일) -->
+    <!-- Surfaces & Backgrounds -->
     <color name="bg">#FBF7F9</color>
     <color name="surface">#FFFFFF</color>
     <color name="muted_bg">#F6F6FA</color>
