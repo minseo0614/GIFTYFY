@@ -1,9 +1,25 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.GIFTYFY" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorSecondary">@color/brand_soft</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
     </style>
 
     <style name="Theme.GIFTYFY" parent="Base.Theme.GIFTYFY" />
+
+    <!-- ✅ 하단 바 선택 배경 스타일: 크기를 조절하고 둥글게(Radius 20dp) 수정 -->
+    <style name="AppCustomIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/brand</item>
+        <item name="android:width">80dp</item>
+        <item name="android:height">56dp</item> 
+        <item name="marginHorizontal">4dp</item>
+        <item name="shapeAppearance">@style/AppIndicatorShape</item>
+    </style>
+
+    <style name="AppIndicatorShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
 </resources>

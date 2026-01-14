@@ -1,6 +1,7 @@
 package com.example.giftyfy;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.view.LayoutInflater;
@@ -28,7 +29,7 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     private final List<Row> rows = new ArrayList<>();
     private final List<String> receivedGiftIds = new ArrayList<>();
-    private final List<String> wishlistIds = new ArrayList<>(); // ✅ 내 위시리스트 목록
+    private final List<String> wishlistIds = new ArrayList<>();
     private final DecimalFormat df = new DecimalFormat("#,###");
 
     private String targetFriendUid = null;
@@ -104,6 +105,10 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         h.tvTitle.setText(p.getTitle() == null ? "" : p.getTitle());
         h.tvPrice.setText(df.format(p.getPrice()) + "원");
 
+        if (h.tvCategory != null) {
+            h.tvCategory.setText(p.getCategory() == null ? "" : p.getCategory());
+        }
+
         String thumb = p.getThumbnail();
         if (thumb != null && !thumb.isEmpty()) {
             Glide.with(h.itemView.getContext()).load(thumb).into(h.imgThumb);
@@ -111,7 +116,7 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             h.imgThumb.setImageDrawable(null);
         }
 
-        // ✅ 1. 친구가 받은 선물 처리 (회색)
+        //받은 선물
         boolean isReceived = receivedGiftIds.contains(p.getId());
         if (isReceived) {
             h.itemView.setAlpha(0.4f);
@@ -127,10 +132,17 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             if (h.btnWish != null) h.btnWish.setVisibility(View.VISIBLE);
         }
 
-        // ✅ 2. 내 위시리스트 처리 (하트)
+        //위시리스트
         boolean isWished = wishlistIds.contains(p.getId());
         if (h.btnWish != null && !isReceived) {
             h.btnWish.setImageResource(isWished ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+            
+            if (isWished) {
+                h.btnWish.setColorFilter(Color.parseColor("#D080B6"));
+            } else {
+                h.btnWish.setColorFilter(Color.parseColor("#555555"));
+            }
+
             h.btnWish.setOnClickListener(v -> {
                 if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
                 
@@ -172,15 +184,16 @@ public class GiftsMixAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     static class ProductVH extends RecyclerView.ViewHolder {
         ImageView imgThumb;
-        TextView tvTitle, tvPrice;
-        ImageButton btnWish; // ✅ 추가
+        TextView tvTitle, tvPrice, tvCategory;
+        ImageButton btnWish;
 
         ProductVH(@NonNull View itemView) {
             super(itemView);
             imgThumb = itemView.findViewById(R.id.img_thumb);
             tvTitle = itemView.findViewById(R.id.tv_title);
             tvPrice = itemView.findViewById(R.id.tv_price);
-            btnWish = itemView.findViewById(R.id.btn_wish); // ✅ 추가
+            tvCategory = itemView.findViewById(R.id.tv_category);
+            btnWish = itemView.findViewById(R.id.btn_wish);
         }
     }
 

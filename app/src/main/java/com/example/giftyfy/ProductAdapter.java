@@ -1,6 +1,7 @@
 package com.example.giftyfy;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +23,7 @@ import java.util.List;
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
 
     private final List<Product> items = new ArrayList<>();
-    private final List<String> wishlistIds = new ArrayList<>(); // ✅ 내 위시리스트 ID 목록
+    private final List<String> wishlistIds = new ArrayList<>();
     private final DecimalFormat df = new DecimalFormat("#,###");
     private String targetFriendUid = null;
 
@@ -36,7 +37,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
         notifyDataSetChanged();
     }
 
-    // ✅ 위시리스트 정보 갱신
     public void setWishlistIds(List<String> ids) {
         wishlistIds.clear();
         if (ids != null) wishlistIds.addAll(ids);
@@ -66,13 +66,18 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
                 .error(R.drawable.ic_launcher_foreground)
                 .into(h.imgThumb);
 
-        // ✅ 1. 위시리스트 상태 표시
         boolean isWished = wishlistIds.contains(p.getId());
         if (h.btnWish != null) {
             h.btnWish.setVisibility(View.VISIBLE);
             h.btnWish.setImageResource(isWished ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
             
-            // ✅ 2. 위시리스트 버튼 클릭 이벤트
+            // ✅ [해결] 선택 시 진한 핑크색(#D080B6) 적용
+            if (isWished) {
+                h.btnWish.setColorFilter(Color.parseColor("#D080B6"));
+            } else {
+                h.btnWish.setColorFilter(Color.parseColor("#555555"));
+            }
+            
             h.btnWish.setOnClickListener(v -> {
                 if (FirebaseAuth.getInstance().getCurrentUser() == null) {
                     Toast.makeText(v.getContext(), "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
@@ -82,16 +87,12 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.VH> {
                 boolean nextState = !isWished;
                 FirebaseManager.getInstance().toggleWishlist(p.getId(), nextState);
                 
-                // 로컬 상태 즉시 반영 (선택 사항: 서버 리스너가 있으면 자동으로 다시 불릴 것임)
                 if (nextState) {
                     if (!wishlistIds.contains(p.getId())) wishlistIds.add(p.getId());
                 } else {
                     wishlistIds.remove(p.getId());
                 }
                 notifyItemChanged(position);
-                
-                String msg = nextState ? "위시리스트에 추가되었습니다." : "위시리스트에서 제거되었습니다.";
-                Toast.makeText(v.getContext(), msg, Toast.LENGTH_SHORT).show();
             });
         }
 

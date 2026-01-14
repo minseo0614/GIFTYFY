@@ -8,7 +8,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ApiClient {
     private static Retrofit retrofit;
 
-    // ✅ 공백이나 오타가 없도록 다시 설정
     private static final String NAVER_CLIENT_ID = "j_F0nqLzUnSdhG6ckX7d";
     private static final String NAVER_CLIENT_SECRET = "74YUluIU1H";
 

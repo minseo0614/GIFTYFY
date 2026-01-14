@@ -39,9 +39,7 @@ public class FirebaseManager {
         return instance;
     }
 
-    // -----------------------------
-    // ✅ Products & Naver Data Sync
-    // -----------------------------
+    //Products & Naver Data Sync
     public void getAllProducts(OnProductsLoadedListener listener) {
         db.collection(COLLECTION_PRODUCTS)
                 .get()
@@ -129,7 +127,7 @@ public class FirebaseManager {
                 .addOnFailureListener(listener::onError);
     }
 
-    // ✅ [중요] 신규 유저 생성 및 기존 유저 정보 업데이트 통합
+    //신규 유저 생성 및 기존 유저 정보 업데이트 통합
     public void saveMyProfile(String userId, String name, String birthday, List<String> interests) {
         FirebaseUser user = auth.getCurrentUser();
         if (user == null) return;
@@ -140,8 +138,7 @@ public class FirebaseManager {
         profile.put("birthday", birthday);
         profile.put("interests", interests);
 
-        // ✅ set(..., SetOptions.merge())를 사용하여 문서가 없으면 생성, 있으면 합침
-        // 신규 가입 시 wishlist와 receivedGifts가 없으면 빈 리스트로 초기화되도록 보강할 수 있습니다.
+        // 신규 가입 시 wishlist와 receivedGifts가 없으면 빈 리스트로 초기화
         db.collection(COLLECTION_USERS).document(user.getUid())
                 .set(profile, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {

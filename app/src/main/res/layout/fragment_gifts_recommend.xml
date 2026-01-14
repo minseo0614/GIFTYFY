@@ -2,33 +2,39 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/bg">
 
-    <!-- 항상: 선물 -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="선물"
-        android:textSize="20sp"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:padding="16dp"
-        android:gravity="start"/>
+        android:textColor="@color/text_primary"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="8dp"/>
 
-    <!-- 친구로 들어왔을 때만 보이게 -->
     <TextView
         android:id="@+id/tvSubTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="14sp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="8dp"
+        android:textColor="@color/text_secondary"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="10dp"
         android:visibility="gone"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_mix"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:clipToPadding="false"/>
 </LinearLayout>

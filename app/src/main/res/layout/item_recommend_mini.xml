@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    android:layout_marginEnd="10dp">
+
+    <ImageView
+        android:id="@+id/ivGiftImage"
+        android:layout_width="match_parent"
+        android:layout_height="110dp"
+        android:scaleType="centerCrop"
+        android:background="#EEEEEE"/>
+
+    <TextView
+        android:id="@+id/tvGiftName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="프리미엄 마카롱"
+        android:textStyle="bold"
+        android:layout_marginTop="8dp"
+        android:maxLines="1"/>
+
+    <TextView
+        android:id="@+id/tvGiftPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="48,000원"
+        android:textColor="#C06AA8"
+        android:textStyle="bold"
+        android:layout_marginTop="2dp"/>
+</LinearLayout>

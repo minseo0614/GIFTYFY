@@ -1,9 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="lavender_main">#B6B4E6</color>
-    <color name="lavender_light">#ECEBFF</color>
-    <color name="gray_light">#E5E5EC</color>
-    <color name="text_dark">#2F2F3A</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <!-- Brand Color (D080B6, FBF7F9) -->
+    <color name="brand">#D080B6</color>
+    <color name="brand_soft">#FBF7F9</color>
+    <color name="brand_tint">#FBF7F9</color>
+
+    <!-- Surfaces & Backgrounds (탭들 배경 연핑크로 통일) -->
+    <color name="bg">#FBF7F9</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="muted_bg">#F6F6FA</color>
+    <color name="divider">#F0F0F0</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#333333</color>
+    <color name="text_secondary">#999999</color>
+
+    <!-- Navigation & Bottom Nav -->
+    <color name="bottom_nav_bg_solid">#FBF7F9</color>
+    <color name="bottom_nav_inactive">#BBBBBB</color>
+    <color name="bottom_nav_active">#FFFFFF</color>
 </resources>

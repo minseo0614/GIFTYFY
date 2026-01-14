@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet"
+    android:backgroundTint="#FBF7F9"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header: Profile + Close Button -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivProfile"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_launcher_foreground"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="16dp"
+                android:layout_toEndOf="@id/ivProfile"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="이름"
+                    android:textColor="#333333"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvBirthday"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="1월 28일"
+                    android:textColor="#999999"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/btnClose"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:padding="4dp"
+                android:alpha="0.4"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="#111111"
+                android:contentDescription="close" />
+        </RelativeLayout>
+
+        <!-- 관계 섹션 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="관계"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/groupRelation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:selectionRequired="false"
+            app:singleSelection="true"
+            app:chipSpacingHorizontal="8dp">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipFamily"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="가족"
+                android:textColor="@color/relation_chip_text_color"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/relation_chip_bg_color"
+                app:chipCornerRadius="24dp"
+                app:chipStrokeWidth="1dp"
+                app:chipStrokeColor="#EEEEEE" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipFriend"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="친구"
+                android:textColor="@color/relation_chip_text_color"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/relation_chip_bg_color"
+                app:chipCornerRadius="24dp"
+                app:chipStrokeWidth="1dp"
+                app:chipStrokeColor="#EEEEEE" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipLove"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="연인"
+                android:textColor="@color/relation_chip_text_color"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/relation_chip_bg_color"
+                app:chipCornerRadius="24dp"
+                app:chipStrokeWidth="1dp"
+                app:chipStrokeColor="#EEEEEE" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipWork"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="동료"
+                android:textColor="@color/relation_chip_text_color"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/relation_chip_bg_color"
+                app:chipCornerRadius="24dp"
+                app:chipStrokeWidth="1dp"
+                app:chipStrokeColor="#EEEEEE" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAwkward"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="어색"
+                android:textColor="@color/relation_chip_text_color"
+                app:checkedIconVisible="false"
+                app:chipBackgroundColor="@color/relation_chip_bg_color"
+                app:chipCornerRadius="24dp"
+                app:chipStrokeWidth="1dp"
+                app:chipStrokeColor="#EEEEEE" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- 관심사 태그 섹션 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="관심사 태그"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/layoutInterestTags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="8dp" />
+
+        <!-- 위시리스트 섹션 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="위시리스트"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/layoutWishlist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- 추천 선물 섹션 -->
+        <TextView
+            android:id="@+id/tvRecommendTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="추천 선물"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/layoutRecommend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <!-- 선물하러 가기 버튼 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoGift"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="40dp"
+            android:backgroundTint="#D080B6"
+            android:text="선물하러 가기"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_gift"
+            app:iconGravity="textStart"
+            app:iconPadding="12dp"
+            app:iconTint="@color/white" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

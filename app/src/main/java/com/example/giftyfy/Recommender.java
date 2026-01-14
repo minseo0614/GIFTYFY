@@ -9,12 +9,10 @@ public class Recommender {
     private static final int COVERAGE_BONUS = 20;    // 태그 커버리지 보정
     private static final int MAX_PER_CATEGORY = 2;   // 같은 카테고리 최대 노출
 
-    // ✅ 기존 코드들이 호출하던 메서드(절대 이름 바꾸지 마)
     public static List<Product> topN(List<Product> all, String relation, List<String> interests, int n) {
         return recommendTopN(all, relation, interests, n);
     }
 
-    // ✅ 새 알고리즘(내가 설계한 것)
     public static List<Product> recommendTopN(
             List<Product> allProducts,
             String friendRelation,
@@ -25,7 +23,6 @@ public class Recommender {
         if (friendRelation == null || friendRelation.trim().isEmpty()) friendRelation = "미설정";
         if (friendInterests == null) friendInterests = new ArrayList<>();
 
-        // interests 최대 3개만 사용 + "#", 공백 통일
         Set<String> interestSet = new HashSet<>();
         for (String s : friendInterests) {
             if (s == null) continue;
@@ -40,11 +37,11 @@ public class Recommender {
             if (p == null) continue;
 
             int relationScore = getRelationScore(p, friendRelation);
-
-            // ✅ 관계 하드 필터: 0이면 제외
-            if (relationScore <= 0) continue;
-
             int tagMatch = countTagMatches(p, interestSet);
+
+            // ✅ [수정] 관계 점수가 0이더라도 태그 매칭이 있으면 후보군에 포함
+            // 관계 점수가 아예 없는 '어색', '미설정' 등도 관심사 기반으로 추천될 수 있게 함
+            if (relationScore <= 0 && tagMatch <= 0) continue;
 
             double coverage = 0.0;
             if (interestCount > 0) coverage = (double) tagMatch / (double) interestCount;
@@ -57,7 +54,7 @@ public class Recommender {
             candidates.add(new Scored(p, score, tagMatch, relationScore));
         }
 
-        // 정렬 + tie-break
+        // 점수 높은 순 정렬
         Collections.sort(candidates, (a, b) -> {
             if (b.score != a.score) return b.score - a.score;
             if (b.tagMatch != a.tagMatch) return b.tagMatch - a.tagMatch;
@@ -65,7 +62,6 @@ public class Recommender {
             return safe(a.p.getTitle()).compareTo(safe(b.p.getTitle()));
         });
 
-        // ✅ 카테고리 다양성 적용해서 topN 뽑기
         List<Product> result = new ArrayList<>();
         Map<String, Integer> catCnt = new HashMap<>();
 
@@ -81,11 +77,19 @@ public class Recommender {
             result.add(s.p);
         }
 
-        // 부족하면 제한 없이 채우기
+        // 부족하면 후보군 중 중복되지 않은 것을 무작위로 채움
         if (result.size() < n) {
             for (Scored s : candidates) {
                 if (result.size() >= n) break;
                 if (!result.contains(s.p)) result.add(s.p);
+            }
+        }
+        
+        // 그래도 부족하면(상품이 적을 때) 전체 리스트에서 보충
+        if (result.size() < n) {
+            for (Product p : allProducts) {
+                if (result.size() >= n) break;
+                if (!result.contains(p)) result.add(p);
             }
         }
 
@@ -95,8 +99,13 @@ public class Recommender {
     private static int getRelationScore(Product p, String relation) {
         Map<String, Integer> map = p.getRelationScores();
         if (map == null) return 0;
+        
+        // ✅ [개선] 데이터베이스에 관계 정보가 명시적으로 없을 때의 기본값 처리
         Integer v = map.get(relation);
-        return (v == null) ? 0 : v;
+        if (v != null) return v;
+        
+        // '미설정', '어색', '동료' 등이 Map에 없을 때 기본 점수 1 부여 (태그 매칭을 위해 노출 기회 제공)
+        return 1; 
     }
 
     private static int countTagMatches(Product p, Set<String> interestSet) {

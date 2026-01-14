@@ -1,185 +1,113 @@
 package com.example.giftyfy.friend;
 
-import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.giftyfy.DetailActivity;
-import com.example.giftyfy.FirebaseManager;
-import com.example.giftyfy.Product;
 import com.example.giftyfy.R;
-import com.example.giftyfy.Recommender;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.FriendViewHolder> {
+public class FriendAdapter extends RecyclerView.Adapter<FriendAdapter.VH> {
 
-    private final List<Friend> friendList;
-    private final OnRelationChangeListener relationListener;
-    private final OnGiftButtonClickListener giftListener;
-
-    public interface OnRelationChangeListener {
-        void onRelationChanged();
+    public interface OnFriendClickListener {
+        void onFriendClick(Friend friend);
     }
 
-    public interface OnGiftButtonClickListener {
-        void onGiftClick(Friend friend);
-    }
+    private final List<Friend> items;
+    private final OnFriendClickListener clickListener;
+    private final boolean isUpcomingStyle;
 
-    public FriendAdapter(List<Friend> friendList,
-                         OnRelationChangeListener relationListener,
-                         OnGiftButtonClickListener giftListener) {
-        this.friendList = friendList;
-        this.relationListener = relationListener;
-        this.giftListener = giftListener;
+    public FriendAdapter(List<Friend> items, boolean isUpcomingStyle, OnFriendClickListener clickListener) {
+        this.items = items;
+        this.isUpcomingStyle = isUpcomingStyle;
+        this.clickListener = clickListener;
     }
 
     @NonNull
     @Override
-    public FriendViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_friend, parent, false);
-        return new FriendViewHolder(view);
+    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        int layoutId = isUpcomingStyle ? R.layout.item_friend_upcoming : R.layout.item_friend;
+        View v = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
+        return new VH(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull FriendViewHolder holder, int position) {
-        Friend friend = friendList.get(position);
+    public void onBindViewHolder(@NonNull VH h, int position) {
+        Friend f = items.get(position);
+        if (f == null) return;
 
-        holder.tvName.setText(friend.getName());
-        holder.tvBirthday.setText(friend.getBirthday());
+        h.tvName.setText(f.getName());
 
-        String relation = friend.getRelation();
-        holder.tvRelation.setText((relation == null || relation.isEmpty()) ? "미설정" : relation);
-
-        StringBuilder interestsText = new StringBuilder();
-        if (friend.getInterests() != null) {
-            for (String interest : friend.getInterests()) {
-                interestsText.append("#").append(interest).append(" ");
+        // 생일에서 년도 제거 (MM-dd 형식만 표시)
+        String rawBirthday = f.getBirthday();
+        if (rawBirthday != null && rawBirthday.contains("-")) {
+            String[] parts = rawBirthday.split("-");
+            if (parts.length >= 3) {
+                h.tvBirthday.setText(Integer.parseInt(parts[1]) + "월 " + Integer.parseInt(parts[2]) + "일");
+            } else if (parts.length == 2) {
+                h.tvBirthday.setText(Integer.parseInt(parts[0]) + "월 " + Integer.parseInt(parts[1]) + "일");
+            } else {
+                h.tvBirthday.setText(rawBirthday);
             }
-        }
-        holder.tvInterests.setText(interestsText.toString().trim());
-
-        // 펼침/접힘 및 추천 데이터 로드
-        if (friend.isExpanded()) {
-            holder.layoutExpandable.setVisibility(View.VISIBLE);
-            loadRecommendationsForFriend(holder, friend);
         } else {
-            holder.layoutExpandable.setVisibility(View.GONE);
+            h.tvBirthday.setText(rawBirthday);
         }
 
-        holder.itemView.setOnClickListener(v -> {
-            boolean nextState = !friend.isExpanded();
-            friend.setExpanded(nextState);
-            notifyItemChanged(position);
-        });
-
-        holder.btnGoToGift.setOnClickListener(v -> {
-            if (giftListener != null) {
-                giftListener.onGiftClick(friend);
+        if (h.tvRelation != null) {
+            String rel = f.getRelation();
+            if (rel == null || rel.isEmpty() || rel.equals("미설정")) {
+                h.tvRelation.setText("미설정");
+                h.tvRelation.setBackgroundResource(R.drawable.bg_pill_soft); 
+                h.tvRelation.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.WHITE));
+                h.tvRelation.setTextColor(Color.BLACK);      
+            } else {
+                h.tvRelation.setText(rel);
+                h.tvRelation.setBackgroundResource(R.drawable.bg_pill_soft);
+                h.tvRelation.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#FBF7F9")));
+                h.tvRelation.setTextColor(Color.BLACK);
             }
-        });
+        }
 
-        View.OnClickListener tagClickListener = v -> {
-            String newRelation = ((TextView) v).getText().toString();
-            friend.setRelation(newRelation);
-            holder.tvRelation.setText(newRelation);
-
-            if (friend.getId() != null && !friend.getId().isEmpty()) {
-                FirebaseManager.getInstance().updateFriendRelation(friend.getId(), newRelation);
-                // 관계가 바뀌면 추천 목록도 갱신되어야 함
-                notifyItemChanged(position);
+        if (h.ivProfile != null) {
+            if (f.getProfileUrl() != null && !f.getProfileUrl().isEmpty()) {
+                Glide.with(h.itemView.getContext())
+                        .load(f.getProfileUrl())
+                        .circleCrop()
+                        .placeholder(R.drawable.ic_launcher_foreground)
+                        .into(h.ivProfile);
+            } else {
+                h.ivProfile.setImageResource(R.drawable.ic_launcher_foreground);
             }
+        }
 
-            if (relationListener != null) {
-                relationListener.onRelationChanged();
-            }
-        };
-
-        holder.tagFamily.setOnClickListener(tagClickListener);
-        holder.tagFriend.setOnClickListener(tagClickListener);
-        holder.tagLove.setOnClickListener(tagClickListener);
-        holder.tagWork.setOnClickListener(tagClickListener);
-        holder.tagAwkward.setOnClickListener(tagClickListener);
-    }
-
-    private void loadRecommendationsForFriend(FriendViewHolder holder, Friend friend) {
-        FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
-            @Override
-            public void onLoaded(List<Product> products) {
-                String relation = friend.getRelation() != null ? friend.getRelation() : "미설정";
-                List<String> interests = friend.getInterests() != null ? friend.getInterests() : new ArrayList<>();
-                
-                List<Product> top3 = Recommender.topN(products, relation, interests, 3);
-                
-                holder.layoutGiftList.removeAllViews();
-                for (Product p : top3) {
-                    View itemView = LayoutInflater.from(holder.itemView.getContext())
-                            .inflate(R.layout.item_gift_recommend, holder.layoutGiftList, false);
-                    
-                    ImageView iv = itemView.findViewById(R.id.ivGiftImage);
-                    TextView tv = itemView.findViewById(R.id.tvGiftName);
-                    
-                    tv.setText(p.getTitle());
-                    Glide.with(itemView.getContext()).load(p.getThumbnail()).into(iv);
-
-                    // 추천 아이템 클릭 시 상세 화면 이동
-                    itemView.setOnClickListener(v -> {
-                        Intent i = new Intent(v.getContext(), DetailActivity.class);
-                        i.putExtra("productId", p.getId());
-                        i.putExtra("targetFriendUid", friend.getId()); // 친구 ID 전달
-                        v.getContext().startActivity(i);
-                    });
-
-                    holder.layoutGiftList.addView(itemView);
-                }
-            }
-
-            @Override
-            public void onError(Exception e) {
-                holder.layoutGiftList.removeAllViews();
-            }
+        h.itemView.setOnClickListener(v -> {
+            if (clickListener != null) clickListener.onFriendClick(f);
         });
     }
 
     @Override
     public int getItemCount() {
-        return friendList == null ? 0 : friendList.size();
+        return items == null ? 0 : items.size();
     }
 
-    static class FriendViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvBirthday, tvRelation, tvInterests;
-        TextView tagFamily, tagFriend, tagLove, tagWork, tagAwkward;
-        View layoutExpandable;
-        View btnGoToGift;
-        LinearLayout layoutGiftList; // ✅ 추가
+    static class VH extends RecyclerView.ViewHolder {
+        ImageView ivProfile;
+        TextView tvName, tvBirthday, tvRelation;
 
-        public FriendViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            tvName = itemView.findViewById(R.id.tvName);
-            tvBirthday = itemView.findViewById(R.id.tvBirthday);
-            tvRelation = itemView.findViewById(R.id.tvRelation);
-            tvInterests = itemView.findViewById(R.id.tvInterests);
-
-            layoutExpandable = itemView.findViewById(R.id.layoutExpandable);
-            btnGoToGift = itemView.findViewById(R.id.btnGoToGift);
-            layoutGiftList = itemView.findViewById(R.id.layoutGiftList); // ✅ 추가
-
-            tagFamily = itemView.findViewById(R.id.tagFamily);
-            tagFriend = itemView.findViewById(R.id.tagFriend);
-            tagLove = itemView.findViewById(R.id.tagLove);
-            tagWork = itemView.findViewById(R.id.tagWork);
-            tagAwkward = itemView.findViewById(R.id.tagAwkward);
+        VH(@NonNull View v) {
+            super(v);
+            ivProfile = v.findViewById(R.id.ivProfile);
+            tvName = v.findViewById(R.id.tvName);
+            tvBirthday = v.findViewById(R.id.tvBirthday);
+            tvRelation = v.findViewById(R.id.tvRelation);
         }
     }
 }

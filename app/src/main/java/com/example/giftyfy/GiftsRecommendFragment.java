@@ -1,8 +1,12 @@
 package com.example.giftyfy;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +30,11 @@ public class GiftsRecommendFragment extends Fragment {
 
     private GiftsMixAdapter adapter;
     private TextView tvGiftHeader;
+    private ImageButton btnBack;
+    private EditText etSearch;
+
+    private final List<Product> originalRecommendedList = new ArrayList<>();
+    private final List<Product> originalAllProductsList = new ArrayList<>();
 
     public GiftsRecommendFragment() {
         super(R.layout.fragment_gifts); 
@@ -55,25 +64,44 @@ public class GiftsRecommendFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         tvGiftHeader = view.findViewById(R.id.tvGiftHeader);
+        btnBack = view.findViewById(R.id.btnBack);
+        etSearch = view.findViewById(R.id.etSearch);
+
+        if (btnBack != null) {
+            btnBack.setVisibility(View.VISIBLE);
+            btnBack.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).backToFriends();
+                }
+            });
+        }
+
+        //검색 기능
+        if (etSearch != null) {
+            etSearch.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    filterResults(s.toString());
+                }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        }
 
         RecyclerView rv = view.findViewById(R.id.rv_products);
-        
-        // ✅ GridLayoutManager 설정: 헤더는 전체 너비(2칸)를 차지하도록 설정
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
         layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
             public int getSpanSize(int position) {
-                // 어댑터에서 현재 아이템이 헤더인지 확인하여 Span 크기 결정
                 if (adapter != null && adapter.getItemViewType(position) == GiftsMixAdapter.TYPE_HEADER) {
-                    return 2; // 헤더는 2칸 모두 차지
+                    return 2;
                 }
-                return 1; // 일반 상품은 1칸만 차지
+                return 1;
             }
         });
-        
         rv.setLayoutManager(layoutManager);
 
         adapter = new GiftsMixAdapter();
+        adapter.setTargetFriendUid(friendUid);
         rv.setAdapter(adapter);
 
         if (friendName != null && !friendName.isEmpty()) {
@@ -87,17 +115,39 @@ public class GiftsRecommendFragment extends Fragment {
         loadData();
     }
 
-    private void loadData() {
-        if (friendUid == null || friendUid.isEmpty()) {
-            Toast.makeText(getContext(), "친구 정보가 없어요", Toast.LENGTH_SHORT).show();
+    private void filterResults(String query) {
+        if (query.isEmpty()) {
+            adapter.setModeFriend(originalRecommendedList, originalAllProductsList);
             return;
         }
+
+        List<Product> filteredReco = new ArrayList<>();
+        for (Product p : originalRecommendedList) {
+            if (p.getTitle() != null && p.getTitle().toLowerCase().contains(query.toLowerCase())) {
+                filteredReco.add(p);
+            }
+        }
+
+        List<Product> filteredAll = new ArrayList<>();
+        for (Product p : originalAllProductsList) {
+            if (p.getTitle() != null && p.getTitle().toLowerCase().contains(query.toLowerCase())) {
+                filteredAll.add(p);
+            }
+        }
+
+        adapter.setModeFriend(filteredReco, filteredAll);
+    }
+
+    private void loadData() {
+        if (friendUid == null || friendUid.isEmpty()) return;
 
         FirebaseManager.getInstance().getUserByUid(friendUid, new FirebaseManager.OnUserLoadedListener() {
             @Override
             public void onLoaded(Map<String, Object> userData) {
+                if (!isAdded()) return;
+                
                 List<String> receivedIds = (List<String>) userData.get("receivedGifts");
-                adapter.setReceivedGiftIds(receivedIds);
+                if (adapter != null) adapter.setReceivedGiftIds(receivedIds);
 
                 final ArrayList<String> interests = new ArrayList<>();
                 Object rawInts = userData.get("interests");
@@ -111,8 +161,15 @@ public class GiftsRecommendFragment extends Fragment {
                         FirebaseManager.getInstance().getAllProducts(new FirebaseManager.OnProductsLoadedListener() {
                             @Override
                             public void onLoaded(List<Product> allProducts) {
+                                if (!isAdded()) return;
+                                originalAllProductsList.clear();
+                                if (allProducts != null) originalAllProductsList.addAll(allProducts);
+
                                 List<Product> top6 = Recommender.topN(allProducts, relation, interests, 6);
-                                adapter.setModeFriend(top6, allProducts);
+                                originalRecommendedList.clear();
+                                if (top6 != null) originalRecommendedList.addAll(top6);
+
+                                adapter.setModeFriend(originalRecommendedList, originalAllProductsList);
                             }
 
                             @Override
